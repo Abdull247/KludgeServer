@@ -1,0 +1,14 @@
+{
+  "plugin": "org.smartide.plugin.go",
+  "run": "go run main.go",
+  "intelligence": {
+    ".json": {
+      "enabled": true,
+      "run": "vscode-json-language-server --stdio"
+    },
+    ".go": {
+      "enabled": true,
+      "run": "gopls"
+    }
+  }
+}
