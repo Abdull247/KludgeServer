@@ -1,6 +1,6 @@
 {
   "plugin": "org.smartide.plugin.go",
-  "run": "go run main.go",
+  "run": "go run ./cmd/server",
   "intelligence": {
     ".json": {
       "enabled": true,

@@ -1,7 +1,11 @@
 package main
 
-import "fmt"
+import (
+	"fmt"
+	"os"
+)
 
 func main() {
-    fmt.Println("Hello, Go!")
+	fmt.Fprintln(os.Stderr, "run the api with: go run ./cmd/server")
+	os.Exit(1)
 }
