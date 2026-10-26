@@ -63,6 +63,7 @@ Schema is applied automatically on server start (`internal/database/migrate.go`)
 
 - `users` - one row per person (email is unique)
 - `oauth_accounts` - GitHub / Google identities linked to a user
+- `profiles` - public profile for each user (username, bio, onboarding)
 
 If the same email signs in with both providers, both accounts attach to the same user.
 
@@ -107,7 +108,7 @@ Flow:
 1. Browser hits `GET /api/auth/github` or `GET /api/auth/google`
 2. Server redirects to the provider
 3. Provider redirects back to `/api/auth/{provider}/callback`
-4. Server upserts the user, sets an httpOnly session cookie, then redirects to `FRONTEND_URL/`
+4. Server upserts the user and profile, sets an httpOnly session cookie, then redirects to `/onboarding` (first login) or `/home`
 
 ### GitHub
 
@@ -179,6 +180,49 @@ Clears the session cookie.
 
 ```json
 { "data": { "ok": true } }
+```
+
+### Current profile
+
+```text
+GET /api/profile/me
+```
+
+Cookie required. `200` with the profile, `401` if not signed in, `404` if missing.
+
+```json
+{
+  "data": {
+    "id": "uuid",
+    "userId": "uuid",
+    "fullName": "Ada Lovelace",
+    "username": "ada1a2b3c",
+    "email": "ada@example.com",
+    "avatarUrl": "https://...",
+    "bio": "New on Kludge — sharing unofficial builds, APIs, and tools.",
+    "websiteUrl": null,
+    "location": null,
+    "role": "user",
+    "accountStatus": "active",
+    "emailVerified": false,
+    "hasCodingBackground": null,
+    "onboardingCompleted": false,
+    "createdAt": "...",
+    "updatedAt": "..."
+  }
+}
+```
+
+### Complete onboarding
+
+```text
+POST /api/profile/onboarding
+```
+
+Cookie required. Body:
+
+```json
+{ "hasCodingBackground": true }
 ```
 
 ### Frontend usage

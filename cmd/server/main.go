@@ -13,6 +13,7 @@ import (
 	"github.com/Abdull247/KludgeServer/internal/config"
 	"github.com/Abdull247/KludgeServer/internal/database"
 	httpx "github.com/Abdull247/KludgeServer/internal/http"
+	"github.com/Abdull247/KludgeServer/internal/profile"
 	"github.com/Abdull247/KludgeServer/internal/user"
 )
 
@@ -34,11 +35,13 @@ func main() {
 	}
 
 	users := user.NewStore(pool)
+	profiles := profile.NewStore(pool)
 	sessions := auth.NewSessionStore(cfg)
 	auth.ConfigureProviders(cfg)
-	authHandler := auth.NewHandler(cfg, users, sessions)
+	authHandler := auth.NewHandler(cfg, users, profiles, sessions)
+	profileHandler := profile.NewHandler(profiles, sessions)
 
-	router := httpx.NewRouter(cfg, authHandler)
+	router := httpx.NewRouter(cfg, authHandler, profileHandler)
 
 	srv := &http.Server{
 		Addr:              ":" + cfg.Port,

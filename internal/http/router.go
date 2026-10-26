@@ -5,11 +5,12 @@ import (
 
 	"github.com/Abdull247/KludgeServer/internal/auth"
 	"github.com/Abdull247/KludgeServer/internal/config"
+	"github.com/Abdull247/KludgeServer/internal/profile"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 )
 
-func NewRouter(cfg *config.Config, authHandler *auth.Handler) http.Handler {
+func NewRouter(cfg *config.Config, authHandler *auth.Handler, profileHandler *profile.Handler) http.Handler {
 	r := chi.NewRouter()
 
 	r.Use(middleware.RequestID)
@@ -24,10 +25,14 @@ func NewRouter(cfg *config.Config, authHandler *auth.Handler) http.Handler {
 
 	r.Route("/api", func(r chi.Router) {
 		r.Route("/auth", func(r chi.Router) {
-			r.Get("/{provider}", authHandler.Begin)
-			r.Get("/{provider}/callback", authHandler.Callback)
 			r.Get("/me", authHandler.Me)
 			r.Post("/logout", authHandler.Logout)
+			r.Get("/{provider}", authHandler.Begin)
+			r.Get("/{provider}/callback", authHandler.Callback)
+		})
+		r.Route("/profile", func(r chi.Router) {
+			r.Get("/me", profileHandler.Me)
+			r.Post("/onboarding", profileHandler.CompleteOnboarding)
 		})
 	})
 

@@ -3,9 +3,11 @@ package auth
 import (
 	"fmt"
 	"net/http"
+	"net/url"
 	"strings"
 
 	"github.com/Abdull247/KludgeServer/internal/config"
+	"github.com/Abdull247/KludgeServer/internal/profile"
 	"github.com/Abdull247/KludgeServer/internal/respond"
 	"github.com/Abdull247/KludgeServer/internal/user"
 	"github.com/go-chi/chi/v5"
@@ -16,10 +18,11 @@ import (
 type Handler struct {
 	cfg      *config.Config
 	users    *user.Store
+	profiles *profile.Store
 	sessions *SessionStore
 }
 
-func NewHandler(cfg *config.Config, users *user.Store, sessions *SessionStore) *Handler {
+func NewHandler(cfg *config.Config, users *user.Store, profiles *profile.Store, sessions *SessionStore) *Handler {
 	gothic.GetProviderName = func(r *http.Request) (string, error) {
 		name := chi.URLParam(r, "provider")
 		if name == "" {
@@ -28,7 +31,7 @@ func NewHandler(cfg *config.Config, users *user.Store, sessions *SessionStore) *
 		return name, nil
 	}
 
-	return &Handler{cfg: cfg, users: users, sessions: sessions}
+	return &Handler{cfg: cfg, users: users, profiles: profiles, sessions: sessions}
 }
 
 var allowedProviders = map[string]struct{}{
@@ -39,12 +42,12 @@ var allowedProviders = map[string]struct{}{
 func (h *Handler) Begin(w http.ResponseWriter, r *http.Request) {
 	provider := strings.ToLower(chi.URLParam(r, "provider"))
 	if _, ok := allowedProviders[provider]; !ok {
-		respond.Error(w, http.StatusBadRequest, "unsupported provider")
+		h.redirectAuthError(w, r, "unsupported provider")
 		return
 	}
 
 	if !h.providerConfigured(provider) {
-		respond.Error(w, http.StatusServiceUnavailable, provider+" oauth is not configured")
+		h.redirectAuthError(w, r, provider+" sign-in is not configured")
 		return
 	}
 
@@ -54,19 +57,19 @@ func (h *Handler) Begin(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) Callback(w http.ResponseWriter, r *http.Request) {
 	provider := strings.ToLower(chi.URLParam(r, "provider"))
 	if _, ok := allowedProviders[provider]; !ok {
-		respond.Error(w, http.StatusBadRequest, "unsupported provider")
+		h.redirectAuthError(w, r, "unsupported provider")
 		return
 	}
 
 	gothUser, err := gothic.CompleteUserAuth(w, r)
 	if err != nil {
-		respond.Error(w, http.StatusUnauthorized, "oauth callback failed")
+		h.redirectAuthError(w, r, "sign-in failed, try again")
 		return
 	}
 
 	email := strings.TrimSpace(strings.ToLower(gothUser.Email))
 	if email == "" {
-		respond.Error(w, http.StatusBadRequest, "oauth provider did not return an email")
+		h.redirectAuthError(w, r, "your account did not return an email")
 		return
 	}
 
@@ -78,16 +81,31 @@ func (h *Handler) Callback(w http.ResponseWriter, r *http.Request) {
 		AvatarURL:      gothUser.AvatarURL,
 	})
 	if err != nil {
-		respond.Error(w, http.StatusInternalServerError, "could not persist user")
+		h.redirectAuthError(w, r, "could not save your account")
+		return
+	}
+
+	p, err := h.profiles.Ensure(r.Context(), profile.EnsureInput{
+		UserID:    u.ID,
+		FullName:  u.Name,
+		Email:     u.Email,
+		AvatarURL: u.AvatarURL,
+	})
+	if err != nil {
+		h.redirectAuthError(w, r, "could not create your profile")
 		return
 	}
 
 	if err := h.sessions.Set(w, u.ID); err != nil {
-		respond.Error(w, http.StatusInternalServerError, "could not create session")
+		h.redirectAuthError(w, r, "could not create your session")
 		return
 	}
 
-	http.Redirect(w, r, h.cfg.FrontendURL+"/", http.StatusFound)
+	next := h.cfg.FrontendURL + "/home?welcome=1"
+	if p != nil && !p.OnboardingCompleted {
+		next = h.cfg.FrontendURL + "/onboarding?welcome=1"
+	}
+	http.Redirect(w, r, next, http.StatusFound)
 }
 
 func (h *Handler) Me(w http.ResponseWriter, r *http.Request) {
@@ -126,6 +144,11 @@ func (h *Handler) providerConfigured(provider string) bool {
 	default:
 		return false
 	}
+}
+
+func (h *Handler) redirectAuthError(w http.ResponseWriter, r *http.Request, message string) {
+	target := h.cfg.FrontendURL + "/auth?error=" + url.QueryEscape(message)
+	http.Redirect(w, r, target, http.StatusFound)
 }
 
 func displayName(u goth.User) string {

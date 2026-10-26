@@ -9,16 +9,16 @@ import (
 )
 
 type Config struct {
-	Env               string
-	Port              string
-	PublicURL         string
-	FrontendURL       string
-	DatabaseURL       string
-	SessionSecret     string
-	SessionCookie     string
-	GitHubClientID    string
+	Env                string
+	Port               string
+	PublicURL          string
+	FrontendURL        string
+	DatabaseURL        string
+	SessionSecret      string
+	SessionCookie      string
+	GitHubClientID     string
 	GitHubClientSecret string
-	GoogleClientID    string
+	GoogleClientID     string
 	GoogleClientSecret string
 }
 
@@ -29,7 +29,7 @@ func Load() (*Config, error) {
 		Env:                get("APP_ENV", "development"),
 		Port:               get("APP_PORT", "8080"),
 		PublicURL:          strings.TrimRight(get("APP_PUBLIC_URL", "http://localhost:8080"), "/"),
-		FrontendURL:        strings.TrimRight(get("FRONTEND_URL", "http://localhost:5173"), "/"),
+		FrontendURL:        strings.TrimRight(get("FRONTEND_URL", "http://localhost:3000"), "/"),
 		DatabaseURL:        os.Getenv("DATABASE_URL"),
 		SessionSecret:      os.Getenv("SESSION_SECRET"),
 		SessionCookie:      get("SESSION_COOKIE", "kludge_session"),

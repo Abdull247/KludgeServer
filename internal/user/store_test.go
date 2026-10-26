@@ -29,6 +29,7 @@ func TestUpsertFromOAuth(t *testing.T) {
 	email := "test-oauth@kludge.dev"
 
 	_, _ = pool.Exec(ctx, `DELETE FROM oauth_accounts WHERE provider_user_id IN ('gh-test-1', 'google-test-1')`)
+	_, _ = pool.Exec(ctx, `DELETE FROM profiles WHERE email = $1`, email)
 	_, _ = pool.Exec(ctx, `DELETE FROM users WHERE email = $1`, email)
 
 	u, err := store.UpsertFromOAuth(ctx, UpsertOAuthInput{

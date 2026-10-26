@@ -35,4 +35,25 @@ CREATE TABLE IF NOT EXISTS oauth_accounts (
 );
 
 CREATE INDEX IF NOT EXISTS oauth_accounts_user_id_idx ON oauth_accounts (user_id);
+
+CREATE TABLE IF NOT EXISTS profiles (
+    id                      UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id                 UUID NOT NULL UNIQUE REFERENCES users(id) ON DELETE CASCADE,
+    full_name               TEXT NOT NULL DEFAULT '',
+    username                TEXT NOT NULL UNIQUE,
+    email                   TEXT NOT NULL,
+    avatar_url              TEXT,
+    bio                     TEXT NOT NULL DEFAULT 'New on Kludge — sharing unofficial builds, APIs, and tools.',
+    website_url             TEXT,
+    location                TEXT,
+    role                    TEXT NOT NULL DEFAULT 'user',
+    account_status          TEXT NOT NULL DEFAULT 'active',
+    email_verified          BOOLEAN NOT NULL DEFAULT false,
+    has_coding_background   BOOLEAN,
+    onboarding_completed    BOOLEAN NOT NULL DEFAULT false,
+    created_at              TIMESTAMPTZ NOT NULL DEFAULT now(),
+    updated_at              TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS profiles_username_idx ON profiles (username);
 `

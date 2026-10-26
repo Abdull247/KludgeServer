@@ -12,9 +12,10 @@ import (
 )
 
 type SessionStore struct {
-	cookie *securecookie.SecureCookie
-	name   string
-	secure bool
+	cookie   *securecookie.SecureCookie
+	name     string
+	secure   bool
+	sameSite http.SameSite
 }
 
 type sessionPayload struct {
@@ -25,18 +26,25 @@ func NewSessionStore(cfg *config.Config) *SessionStore {
 	hashKey := []byte(cfg.SessionSecret)
 	blockKey := hashKey[:32]
 
+	secure := !cfg.IsDev()
+	sameSite := http.SameSiteLaxMode
+	if secure {
+		sameSite = http.SameSiteNoneMode
+	}
+
 	oauthStore := sessions.NewCookieStore(hashKey)
 	oauthStore.MaxAge(int((10 * time.Minute).Seconds()))
 	oauthStore.Options.Path = "/"
 	oauthStore.Options.HttpOnly = true
-	oauthStore.Options.Secure = !cfg.IsDev()
-	oauthStore.Options.SameSite = http.SameSiteLaxMode
+	oauthStore.Options.Secure = secure
+	oauthStore.Options.SameSite = sameSite
 	gothic.Store = oauthStore
 
 	return &SessionStore{
-		cookie: securecookie.New(hashKey, blockKey),
-		name:   cfg.SessionCookie,
-		secure: !cfg.IsDev(),
+		cookie:   securecookie.New(hashKey, blockKey),
+		name:     cfg.SessionCookie,
+		secure:   secure,
+		sameSite: sameSite,
 	}
 }
 
@@ -53,7 +61,7 @@ func (s *SessionStore) Set(w http.ResponseWriter, userID uuid.UUID) error {
 		MaxAge:   int((30 * 24 * time.Hour).Seconds()),
 		HttpOnly: true,
 		Secure:   s.secure,
-		SameSite: http.SameSiteLaxMode,
+		SameSite: s.sameSite,
 	})
 	return nil
 }
@@ -84,6 +92,6 @@ func (s *SessionStore) Clear(w http.ResponseWriter) {
 		MaxAge:   -1,
 		HttpOnly: true,
 		Secure:   s.secure,
-		SameSite: http.SameSiteLaxMode,
+		SameSite: s.sameSite,
 	})
 }
