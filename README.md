@@ -308,6 +308,9 @@ The minted value is also a valid session cookie value, so it can be pasted back 
 | `POST` | `/api/v1/items/record` | automation | Ingest a new item as the automation account |
 | `POST` | `/api/v1/items/{id}/save` | session | Toggle save for the viewer |
 | `POST` | `/api/v1/items/{id}/like` | session | Toggle like for the viewer |
+| `GET` | `/api/v1/admin/home` | admin | Admin dashboard: stats + flat project/API/user lists |
+| `GET` | `/api/v1/admin/users` | admin | Every account with role and project counts |
+| `GET` | `/api/v1/admin/projects` | admin | Every published build/API, newest first |
 
 All JSON responses use the envelope `{"data": ...}` on success and `{"error": "..."}` on failure.
 
@@ -739,6 +742,7 @@ See `.env.example`. Important keys:
 | `SESSION_SECRET` | Signs cookies (32+ chars) |
 | `MODE` | `live` (default) or `test`. `test` serves catalog JSON from `internal/catalog/mocks` and skips Postgres |
 | `AUTOMATION_EMAIL` | Email of the automation ingest account; the only identity allowed to `POST /api/v1/items/record`. Defaults to `ingest@kludge.dev` in test mode |
+| `ADMIN_EMAILS` | Comma-separated emails granted admin (`/api/v1/admin/*` + web admin dashboard). Defaults to `ada@kludge.dev` in test mode |
 | `GITHUB_CLIENT_ID` / `GITHUB_CLIENT_SECRET` | GitHub OAuth |
 | `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` | Google OAuth |
 

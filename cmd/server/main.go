@@ -9,6 +9,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/Abdull247/KludgeServer/internal/admin"
 	"github.com/Abdull247/KludgeServer/internal/auth"
 	"github.com/Abdull247/KludgeServer/internal/catalog"
 	"github.com/Abdull247/KludgeServer/internal/config"
@@ -80,10 +81,11 @@ func serve(cfg *config.Config, authHandler *auth.Handler, profileHandler *profil
 		identities = profileIdentityAdapter{profiles: profiles}
 	}
 	catHandler := catalog.NewHandler(catStore, sessions, identities, cfg.AutomationEmail)
+	adminHandler := admin.NewHandler(catStore, pool, sessions, identities, cfg.AdminEmails)
 
 	srv := &http.Server{
 		Addr:              ":" + cfg.Port,
-		Handler:           httpx.NewRouter(cfg, authHandler, profileHandler, catHandler),
+		Handler:           httpx.NewRouter(cfg, authHandler, profileHandler, catHandler, adminHandler),
 		ReadHeaderTimeout: 10 * time.Second,
 		ReadTimeout:       30 * time.Second,
 		WriteTimeout:      30 * time.Second,

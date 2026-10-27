@@ -36,19 +36,14 @@ func NewHandler(store *Store, sessions SessionReader, identities IdentityLookup,
 
 // identity resolves the person behind the session into a catalog Identity.
 // When no lookup is wired (test mode without a database) it falls back to the
-// deterministic test identity, stamped with the configured automation email
-// so the record ingest path stays exercisable end to end.
+// deterministic test identity.
 func (h *Handler) identity(r *http.Request) (Identity, bool) {
 	uid, ok := h.sessions.UserID(r)
 	if !ok {
 		return Identity{}, false
 	}
 	if h.identities == nil {
-		iden := testIdentity()
-		if h.automationEmail != "" {
-			iden.Email = h.automationEmail
-		}
-		return iden, true
+		return TestIdentity(), true
 	}
 	return h.identities.ByUserID(r.Context(), uid)
 }
@@ -250,7 +245,8 @@ func (h *Handler) CreateItem(w http.ResponseWriter, r *http.Request) {
 
 // RecordItem ingests an item extracted by the automation account. Unlike
 // CreateItem the publisher is the automation identity, and the endpoint is
-// gated to the configured automation email.
+// gated to the configured automation email. Without a wired identity lookup
+// (test mode) the session is treated as the automation account directly.
 func (h *Handler) RecordItem(w http.ResponseWriter, r *http.Request) {
 	if !h.requireUser(w, r) {
 		return
@@ -264,7 +260,7 @@ func (h *Handler) RecordItem(w http.ResponseWriter, r *http.Request) {
 		respond.Error(w, http.StatusForbidden, "profile not found for session user")
 		return
 	}
-	if !strings.EqualFold(iden.Email, h.automationEmail) {
+	if h.identities != nil && !strings.EqualFold(iden.Email, h.automationEmail) {
 		respond.Error(w, http.StatusForbidden, "only the automation account may record items")
 		return
 	}

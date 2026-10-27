@@ -22,10 +22,10 @@ type IdentityLookup interface {
 	ByUserID(ctx context.Context, userID uuid.UUID) (Identity, bool)
 }
 
-// testIdentity is used when no identity lookup is wired (test mode without a
-// database). Its email matches the default automation email so record tests
-// can exercise the full create path.
-func testIdentity() Identity {
+// TestIdentity is used when no identity lookup is wired (test mode without a
+// database). Its email matches the test-mode default admin email so admin and
+// record paths stay exercisable.
+func TestIdentity() Identity {
 	return Identity{
 		UserID:    "usr_ada",
 		Email:     "ada@kludge.dev",

@@ -3,6 +3,7 @@ package httpx
 import (
 	"net/http"
 
+	"github.com/Abdull247/KludgeServer/internal/admin"
 	"github.com/Abdull247/KludgeServer/internal/auth"
 	"github.com/Abdull247/KludgeServer/internal/catalog"
 	"github.com/Abdull247/KludgeServer/internal/config"
@@ -11,7 +12,7 @@ import (
 	"github.com/go-chi/chi/v5/middleware"
 )
 
-func NewRouter(cfg *config.Config, authHandler *auth.Handler, profileHandler *profile.Handler, catalogHandler *catalog.Handler) http.Handler {
+func NewRouter(cfg *config.Config, authHandler *auth.Handler, profileHandler *profile.Handler, catalogHandler *catalog.Handler, adminHandler *admin.Handler) http.Handler {
 	r := chi.NewRouter()
 
 	r.Use(middleware.RequestID)
@@ -50,6 +51,14 @@ func NewRouter(cfg *config.Config, authHandler *auth.Handler, profileHandler *pr
 				r.Post("/items/record", catalogHandler.RecordItem)
 				r.Post("/items/{id}/save", catalogHandler.Save)
 				r.Post("/items/{id}/like", catalogHandler.Like)
+
+				if adminHandler != nil {
+					r.Route("/admin", func(r chi.Router) {
+						r.Get("/home", adminHandler.Home)
+						r.Get("/users", adminHandler.Users)
+						r.Get("/projects", adminHandler.Projects)
+					})
+				}
 			})
 		}
 	})

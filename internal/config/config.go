@@ -22,6 +22,7 @@ type Config struct {
 	GoogleClientID     string
 	GoogleClientSecret string
 	AutomationEmail    string
+	AdminEmails        []string
 }
 
 func Load() (*Config, error) {
@@ -41,6 +42,7 @@ func Load() (*Config, error) {
 		GoogleClientID:     os.Getenv("GOOGLE_CLIENT_ID"),
 		GoogleClientSecret: os.Getenv("GOOGLE_CLIENT_SECRET"),
 		AutomationEmail:    strings.ToLower(strings.TrimSpace(os.Getenv("AUTOMATION_EMAIL"))),
+		AdminEmails:        parseEmails(os.Getenv("ADMIN_EMAILS")),
 	}
 
 	if cfg.IsTest() {
@@ -52,6 +54,9 @@ func Load() (*Config, error) {
 		}
 		if cfg.AutomationEmail == "" {
 			cfg.AutomationEmail = "ingest@kludge.dev"
+		}
+		if len(cfg.AdminEmails) == 0 {
+			cfg.AdminEmails = []string{"ada@kludge.dev"}
 		}
 		return cfg, nil
 	}
@@ -83,4 +88,16 @@ func get(key, fallback string) string {
 		return v
 	}
 	return fallback
+}
+
+// parseEmails splits a comma-separated email list into lowercase entries.
+func parseEmails(raw string) []string {
+	var out []string
+	for _, part := range strings.Split(raw, ",") {
+		part = strings.ToLower(strings.TrimSpace(part))
+		if part != "" {
+			out = append(out, part)
+		}
+	}
+	return out
 }

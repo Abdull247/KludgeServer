@@ -310,6 +310,33 @@ func (s *Store) Toggle(id, action string) (ToggleResult, bool) {
 	return ToggleResult{ID: it.ID, Viewer: it.Viewer, Stats: it.Stats, Metric: it.Metric}, true
 }
 
+// Items returns a snapshot of every catalog item, creators and collections
+// included. Admin tooling slices it by kind; entry-points must not mutate the
+// returned items.
+func (s *Store) Items() []Item {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	out := make([]Item, len(s.items))
+	copy(out, s.items)
+	return out
+}
+
+// Creators returns the deduped people referenced by catalog item creators.
+func (s *Store) Creators() []CreatorRef {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	seen := make(map[string]bool, 8)
+	out := make([]CreatorRef, 0, 8)
+	for _, it := range s.items {
+		if it.Creator == nil || seen[it.Creator.ID] {
+			continue
+		}
+		seen[it.Creator.ID] = true
+		out = append(out, *it.Creator)
+	}
+	return out
+}
+
 func (s *Store) section(idOrSlug string) (Section, bool) {
 	if i, ok := s.secByID[idOrSlug]; ok {
 		return s.sections[i], true
