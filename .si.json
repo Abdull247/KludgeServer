@@ -9,6 +9,14 @@
     ".go": {
       "enabled": true,
       "run": "gopls"
+    },
+    ".md": {
+      "enabled": true,
+      "run": "marksman server"
+    },
+    ".mod": {
+      "enabled": true,
+      "run": "gopls"
     }
   }
 }
