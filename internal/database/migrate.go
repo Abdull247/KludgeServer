@@ -83,12 +83,12 @@ CREATE TABLE IF NOT EXISTS catalog_items (
     verified_at          TIMESTAMPTZ
 );
 
+ALTER TABLE catalog_items ADD COLUMN IF NOT EXISTS verification_status TEXT NOT NULL DEFAULT 'verified';
+ALTER TABLE catalog_items ADD COLUMN IF NOT EXISTS rejection_reason TEXT NOT NULL DEFAULT '';
+ALTER TABLE catalog_items ADD COLUMN IF NOT EXISTS verified_at TIMESTAMPTZ;
+
 CREATE INDEX IF NOT EXISTS catalog_items_category_idx ON catalog_items (category_id);
 CREATE INDEX IF NOT EXISTS catalog_items_section_idx ON catalog_items (section_id);
 CREATE INDEX IF NOT EXISTS catalog_items_published_idx ON catalog_items (published_at DESC);
 CREATE INDEX IF NOT EXISTS catalog_items_verification_idx ON catalog_items (verification_status);
-
-ALTER TABLE catalog_items ADD COLUMN IF NOT EXISTS verification_status TEXT NOT NULL DEFAULT 'verified';
-ALTER TABLE catalog_items ADD COLUMN IF NOT EXISTS rejection_reason TEXT NOT NULL DEFAULT '';
-ALTER TABLE catalog_items ADD COLUMN IF NOT EXISTS verified_at TIMESTAMPTZ;
 `
