@@ -64,6 +64,7 @@ Schema is applied automatically on server start (`internal/database/migrate.go`)
 - `users` - one row per person (email is unique)
 - `oauth_accounts` - GitHub / Google identities linked to a user
 - `profiles` - public profile for each user (username, bio, onboarding)
+- `catalog_items` - created/recorded catalog items (mock items are only in memory)
 
 If the same email signs in with both providers, both accounts attach to the same user.
 
@@ -286,7 +287,52 @@ POST /api/v1/items/{id}/save
 POST /api/v1/items/{id}/like
 ```
 
-Toggles the viewer flag and updates counts. Item detail and create-build endpoints are not in this pass.
+Toggles the viewer flag and updates counts.
+
+### Item types
+
+```text
+GET /api/v1/types
+```
+
+Public. Lists every supported `type` slug with the category/section it lands in: `modded_apk`, `unofficial_api`, `ai_jailbreak`, `frida`, `custom_rom`, `ui_kit`, `root_pack`, `patch`, `prompt_pack`, `graphql`, `proxy`, `sdk`.
+
+### Create an item (user publish)
+
+```text
+POST /api/v1/items
+Authorization: Bearer <access-token> (or cookie)
+```
+
+Body:
+
+```json
+{
+  "name": "Orbit Reborn",
+  "description": "Unlocked build with hashes on file.",
+  "type": "modded_apk",
+  "version": "1.4.2",
+  "artworkUrl": "https://images.example.com/art/cover.png",
+  "bannerUrls": ["https://images.example.com/art/wide.png"],
+  "tags": ["weekend drop"],
+  "sourceUrl": "https://example.com/source"
+}
+```
+
+`name`, `description`, `type`, `artworkUrl` are required. `version`, `bannerUrls` (max 8), `tags` (max 8), `sourceUrl`, and `publishedAt` (RFC3339) are optional. Returns `201` with the created item. The publisher is the session user; type maps to its category automatically (a `modded_apk` lands in `cat_modded_apk` under Builds).
+
+In live mode created items are persisted to `catalog_items` and reloaded on boot. Mock fixtures stay in memory only.
+
+### Record an item (automation ingest)
+
+```text
+POST /api/v1/items/record
+Authorization: Bearer <access-token> (or cookie)
+```
+
+Same body. Only the automation account (`AUTOMATION_EMAIL`) may call this: `503` when unset, `403` for any other identity. Items are stamped with `publisher.kind = "automation"`. The automation account is provisioned on boot in live mode.
+
+> The record endpoint never fetches remote pages itself. Send already-extracted, normalized JSON.
 
 ## Environment
 
@@ -300,6 +346,7 @@ See `.env.example`. Important keys:
 | `DATABASE_URL` | Postgres URL (local now, Neon later) |
 | `SESSION_SECRET` | Signs cookies (32+ chars) |
 | `MODE` | `live` (default) or `test`. `test` serves catalog JSON from `internal/catalog/mocks` and skips Postgres |
+| `AUTOMATION_EMAIL` | Email of the automation ingest account; the only identity allowed to `POST /api/v1/items/record`. Defaults to `ingest@kludge.dev` in test mode |
 | `GITHUB_CLIENT_ID` / `GITHUB_CLIENT_SECRET` | GitHub OAuth |
 | `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` | Google OAuth |
 

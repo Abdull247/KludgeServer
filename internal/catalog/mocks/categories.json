@@ -48,6 +48,14 @@
     "href": "/api/v1/categories/cat_prompt"
   },
   {
+    "id": "cat_ai_jailbreak",
+    "slug": "ai-jailbreak",
+    "name": "AI Jailbreak",
+    "description": "Prompt kits and system configs that keep agents useful past the usual refusals.",
+    "sectionId": "sec_builds",
+    "href": "/api/v1/categories/cat_ai_jailbreak"
+  },
+  {
     "id": "cat_patch",
     "slug": "patch",
     "name": "Patch",

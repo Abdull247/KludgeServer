@@ -65,7 +65,10 @@ type Item struct {
 	Mark          string      `json:"mark"`
 	Tone          string      `json:"tone"`
 	Blurb         string      `json:"blurb"`
+	Description   string      `json:"description"`
+	Version       string      `json:"version,omitempty"`
 	BuildArtwork  string      `json:"buildArtwork"`
+	Banners       []string    `json:"banners,omitempty"`
 	CategoryID    string      `json:"categoryId"`
 	SectionID     string      `json:"sectionId"`
 	Category      CategoryRef `json:"category"`
@@ -73,6 +76,9 @@ type Item struct {
 	Metric        Metric      `json:"metric"`
 	Viewer        ViewerState `json:"viewer"`
 	Creator       *CreatorRef `json:"creator,omitempty"`
+	Publisher     *Publisher  `json:"publisher,omitempty"`
+	PublisherID   string      `json:"-"`
+	SourceURL     string      `json:"sourceUrl,omitempty"`
 	Tags          []string    `json:"tags"`
 	SubItems      []SubItem   `json:"subItems,omitempty"`
 	PublishedAt   time.Time   `json:"publishedAt"`

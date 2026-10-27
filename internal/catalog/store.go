@@ -10,6 +10,8 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 //go:embed mocks/*.json
@@ -18,6 +20,7 @@ var mocksFS embed.FS
 type Store struct {
 	mu         sync.RWMutex
 	now        func() time.Time
+	db         *pgxpool.Pool
 	viewer     Viewer
 	sections   []Section
 	categories []Category
@@ -102,6 +105,20 @@ func (s *Store) hydrate() {
 		if idx, ok := s.catByID[it.CategoryID]; ok {
 			c := s.categories[idx]
 			it.Category = CategoryRef{ID: c.ID, Slug: c.Slug, Name: c.Name}
+		}
+		if it.Publisher == nil && it.Creator != nil {
+			it.PublisherID = it.Creator.ID
+			it.Publisher = &Publisher{
+				ID:          it.Creator.ID,
+				Username:    it.Creator.Username,
+				DisplayName: it.Creator.DisplayName,
+				AvatarURL:   it.Creator.AvatarURL,
+				Kind:        PublisherKindUser,
+				Verified:    it.Creator.Verified,
+			}
+		}
+		if it.Description == "" && it.Blurb != "" {
+			it.Description = it.Blurb
 		}
 		it.Metric = metricFor(*it)
 		if it.Tags == nil {

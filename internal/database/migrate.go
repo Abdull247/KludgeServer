@@ -56,4 +56,31 @@ CREATE TABLE IF NOT EXISTS profiles (
 );
 
 CREATE INDEX IF NOT EXISTS profiles_username_idx ON profiles (username);
+
+CREATE TABLE IF NOT EXISTS catalog_items (
+    id            TEXT PRIMARY KEY,
+    slug          TEXT NOT NULL UNIQUE,
+    name          TEXT NOT NULL,
+    type          TEXT NOT NULL,
+    kind          TEXT NOT NULL DEFAULT 'build',
+    mark          TEXT NOT NULL DEFAULT '',
+    tone          TEXT NOT NULL DEFAULT 'a',
+    blurb         TEXT NOT NULL DEFAULT '',
+    description   TEXT NOT NULL DEFAULT '',
+    version       TEXT NOT NULL DEFAULT '',
+    build_artwork TEXT NOT NULL DEFAULT '',
+    banners       JSONB NOT NULL DEFAULT '[]'::jsonb,
+    category_id   TEXT NOT NULL,
+    section_id    TEXT NOT NULL,
+    publisher_id  UUID REFERENCES users(id) ON DELETE SET NULL,
+    source_url    TEXT NOT NULL DEFAULT '',
+    tags          JSONB NOT NULL DEFAULT '[]'::jsonb,
+    stats         JSONB NOT NULL DEFAULT '{}'::jsonb,
+    published_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
+    updated_at    TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS catalog_items_category_idx ON catalog_items (category_id);
+CREATE INDEX IF NOT EXISTS catalog_items_section_idx ON catalog_items (section_id);
+CREATE INDEX IF NOT EXISTS catalog_items_published_idx ON catalog_items (published_at DESC);
 `

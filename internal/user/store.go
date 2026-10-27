@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
@@ -27,12 +28,44 @@ func (s *Store) GetByID(ctx context.Context, id uuid.UUID) (*User, error) {
 	return scanUser(row)
 }
 
+func (s *Store) GetByEmail(ctx context.Context, email string) (*User, error) {
+	row := s.pool.QueryRow(ctx, `
+		SELECT id, email, name, avatar_url, created_at, updated_at
+		FROM users
+		WHERE email = $1
+	`, strings.ToLower(strings.TrimSpace(email)))
+	return scanUser(row)
+}
+
+// EnsureByEmail returns the user with the given email, creating a minimal
+// account when missing. Backs the automation ingest account.
+func (s *Store) EnsureByEmail(ctx context.Context, email string) (*User, error) {
+	email = strings.ToLower(strings.TrimSpace(email))
+	if email == "" {
+		return nil, fmt.Errorf("email is required")
+	}
+	existing, err := s.GetByEmail(ctx, email)
+	if err != nil {
+		return nil, err
+	}
+	if existing != nil {
+		return existing, nil
+	}
+	row := s.pool.QueryRow(ctx, `
+		INSERT INTO users (email, name)
+		VALUES ($1, $2)
+		ON CONFLICT (email) DO UPDATE SET updated_at = now()
+		RETURNING id, email, name, avatar_url, created_at, updated_at
+	`, email, "Kludge Ingest")
+	return scanUser(row)
+}
+
 type UpsertOAuthInput struct {
-	Provider         string
-	ProviderUserID   string
-	Email            string
-	Name             string
-	AvatarURL        string
+	Provider       string
+	ProviderUserID string
+	Email          string
+	Name           string
+	AvatarURL      string
 }
 
 func (s *Store) UpsertFromOAuth(ctx context.Context, in UpsertOAuthInput) (*User, error) {

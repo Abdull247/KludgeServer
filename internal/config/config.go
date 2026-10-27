@@ -21,6 +21,7 @@ type Config struct {
 	GitHubClientSecret string
 	GoogleClientID     string
 	GoogleClientSecret string
+	AutomationEmail    string
 }
 
 func Load() (*Config, error) {
@@ -39,6 +40,7 @@ func Load() (*Config, error) {
 		GitHubClientSecret: os.Getenv("GITHUB_CLIENT_SECRET"),
 		GoogleClientID:     os.Getenv("GOOGLE_CLIENT_ID"),
 		GoogleClientSecret: os.Getenv("GOOGLE_CLIENT_SECRET"),
+		AutomationEmail:    strings.ToLower(strings.TrimSpace(os.Getenv("AUTOMATION_EMAIL"))),
 	}
 
 	if cfg.IsTest() {
@@ -47,6 +49,9 @@ func Load() (*Config, error) {
 		}
 		if cfg.DatabaseURL == "" {
 			cfg.DatabaseURL = "postgres://kludge:kludge_dev@127.0.0.1:5432/kludge?sslmode=disable"
+		}
+		if cfg.AutomationEmail == "" {
+			cfg.AutomationEmail = "ingest@kludge.dev"
 		}
 		return cfg, nil
 	}
