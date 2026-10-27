@@ -297,6 +297,9 @@ The minted value is also a valid session cookie value, so it can be pasted back 
 | Method | Path | Auth | Purpose |
 | --- | --- | --- | --- |
 | `GET` | `/api/v1/types` | public | Supported item types and their categories |
+| `GET` | `/api/v1/tags` | public | Chip list from `data/tags.json` |
+| `GET` | `/api/v1/uploads/limits` | public | Max upload size and accepted types |
+| `POST` | `/api/v1/uploads?kind=` | session | Upload artwork, banner, or source to R2 |
 | `GET` | `/api/v1/home` | session | Full home feed (sections + rails) |
 | `GET` | `/api/v1/sections/{id}` | session | One section with its categories + feed |
 | `GET` | `/api/v1/categories/{id}` | session | One category with its items |
@@ -745,6 +748,11 @@ See `.env.example`. Important keys:
 | `ADMIN_EMAILS` | Comma-separated emails granted admin (`/api/v1/admin/*` + web admin dashboard). Defaults to `ada@kludge.dev` in test mode |
 | `GITHUB_CLIENT_ID` / `GITHUB_CLIENT_SECRET` | GitHub OAuth |
 | `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` | Google OAuth |
+| `R2_ACCESS_KEY_ID` / `R2_SECRET_ACCESS_KEY` | Cloudflare R2 credentials |
+| `R2_BUCKET_NAME` | R2 bucket for artwork, banners, and source files |
+| `R2_ENDPOINT` | S3 API endpoint, e.g. `https://<accountid>.r2.cloudflarestorage.com` |
+| `R2_PUBLIC_URL` | Public base URL used in returned object URLs |
+| `MAX_UPLOAD_BYTES` | Max size for a single upload. Bytes or `50MB`. Default `50MB` |
 
 Production Neon example:
 

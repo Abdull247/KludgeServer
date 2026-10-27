@@ -277,3 +277,8 @@ func (h *Handler) RecordItem(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) Types(w http.ResponseWriter, r *http.Request) {
 	respond.JSON(w, http.StatusOK, TypeDefs())
 }
+
+// Tags returns the editable chip list from data/tags.json.
+func (h *Handler) Tags(w http.ResponseWriter, r *http.Request) {
+	respond.JSON(w, http.StatusOK, loadTags())
+}

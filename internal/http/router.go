@@ -8,11 +8,12 @@ import (
 	"github.com/Abdull247/KludgeServer/internal/catalog"
 	"github.com/Abdull247/KludgeServer/internal/config"
 	"github.com/Abdull247/KludgeServer/internal/profile"
+	"github.com/Abdull247/KludgeServer/internal/upload"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 )
 
-func NewRouter(cfg *config.Config, authHandler *auth.Handler, profileHandler *profile.Handler, catalogHandler *catalog.Handler, adminHandler *admin.Handler) http.Handler {
+func NewRouter(cfg *config.Config, authHandler *auth.Handler, profileHandler *profile.Handler, catalogHandler *catalog.Handler, adminHandler *admin.Handler, uploadHandler *upload.Handler) http.Handler {
 	r := chi.NewRouter()
 
 	r.Use(middleware.RequestID)
@@ -47,10 +48,16 @@ func NewRouter(cfg *config.Config, authHandler *auth.Handler, profileHandler *pr
 				r.Get("/collections", catalogHandler.Collections)
 				r.Get("/search", catalogHandler.Search)
 				r.Get("/types", catalogHandler.Types)
+				r.Get("/tags", catalogHandler.Tags)
 				r.Post("/items", catalogHandler.CreateItem)
 				r.Post("/items/record", catalogHandler.RecordItem)
 				r.Post("/items/{id}/save", catalogHandler.Save)
 				r.Post("/items/{id}/like", catalogHandler.Like)
+
+				if uploadHandler != nil {
+					r.Get("/uploads/limits", uploadHandler.Limits)
+					r.Post("/uploads", uploadHandler.Put)
+				}
 
 				if adminHandler != nil {
 					r.Route("/admin", func(r chi.Router) {

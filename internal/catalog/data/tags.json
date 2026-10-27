@@ -1,0 +1,24 @@
+{
+  "tags": [
+    { "slug": "android", "label": "Android" },
+    { "slug": "ios", "label": "iOS" },
+    { "slug": "apk", "label": "APK" },
+    { "slug": "mod", "label": "Mod" },
+    { "slug": "premium", "label": "Premium" },
+    { "slug": "jailbreak", "label": "Jailbreak" },
+    { "slug": "root", "label": "Root" },
+    { "slug": "frida", "label": "Frida" },
+    { "slug": "rom", "label": "ROM" },
+    { "slug": "patch", "label": "Patch" },
+    { "slug": "api", "label": "API" },
+    { "slug": "sdk", "label": "SDK" },
+    { "slug": "graphql", "label": "GraphQL" },
+    { "slug": "proxy", "label": "Proxy" },
+    { "slug": "ai", "label": "AI" },
+    { "slug": "agent", "label": "Agent" },
+    { "slug": "ui-kit", "label": "UI Kit" },
+    { "slug": "open-source", "label": "Open source" },
+    { "slug": "weekend-drop", "label": "Weekend drop" },
+    { "slug": "beta", "label": "Beta" }
+  ]
+}

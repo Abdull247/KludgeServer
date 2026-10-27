@@ -100,6 +100,30 @@ func TestTypesRoute(t *testing.T) {
 	}
 }
 
+func TestTagsRoute(t *testing.T) {
+	h := testHandler(t, false)
+	r := chi.NewRouter()
+	r.Get("/api/v1/tags", h.Tags)
+	req := httptest.NewRequest(http.MethodGet, "/api/v1/tags", nil)
+	rec := httptest.NewRecorder()
+	r.ServeHTTP(rec, req)
+	if rec.Code != http.StatusOK {
+		t.Fatalf("status %d body %s", rec.Code, rec.Body.String())
+	}
+	var env struct {
+		Data []Tag `json:"data"`
+	}
+	if err := json.Unmarshal(rec.Body.Bytes(), &env); err != nil {
+		t.Fatal(err)
+	}
+	if len(env.Data) < 8 {
+		t.Fatalf("tags %d", len(env.Data))
+	}
+	if env.Data[0].Slug == "" || env.Data[0].Label == "" {
+		t.Fatalf("empty tag: %+v", env.Data[0])
+	}
+}
+
 func createRouter(h *Handler) *chi.Mux {
 	r := chi.NewRouter()
 	r.Post("/items", h.CreateItem)

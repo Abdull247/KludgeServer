@@ -23,6 +23,12 @@ type Config struct {
 	GoogleClientSecret string
 	AutomationEmail    string
 	AdminEmails        []string
+	R2AccessKeyID      string
+	R2SecretAccessKey  string
+	R2BucketName       string
+	R2Endpoint         string
+	R2PublicURL        string
+	MaxUploadBytes     int64
 }
 
 func Load() (*Config, error) {
@@ -43,6 +49,12 @@ func Load() (*Config, error) {
 		GoogleClientSecret: os.Getenv("GOOGLE_CLIENT_SECRET"),
 		AutomationEmail:    strings.ToLower(strings.TrimSpace(os.Getenv("AUTOMATION_EMAIL"))),
 		AdminEmails:        parseEmails(os.Getenv("ADMIN_EMAILS")),
+		R2AccessKeyID:      os.Getenv("R2_ACCESS_KEY_ID"),
+		R2SecretAccessKey:  os.Getenv("R2_SECRET_ACCESS_KEY"),
+		R2BucketName:       os.Getenv("R2_BUCKET_NAME"),
+		R2Endpoint:         strings.TrimRight(os.Getenv("R2_ENDPOINT"), "/"),
+		R2PublicURL:        strings.TrimRight(os.Getenv("R2_PUBLIC_URL"), "/"),
+		MaxUploadBytes:     parseBytes(get("MAX_UPLOAD_BYTES", "52428800")),
 	}
 
 	if cfg.IsTest() {
@@ -100,4 +112,36 @@ func parseEmails(raw string) []string {
 		}
 	}
 	return out
+}
+
+func parseBytes(raw string) int64 {
+	raw = strings.TrimSpace(strings.ToUpper(raw))
+	if raw == "" {
+		return 52428800
+	}
+	mult := int64(1)
+	switch {
+	case strings.HasSuffix(raw, "GB"):
+		mult = 1 << 30
+		raw = strings.TrimSpace(strings.TrimSuffix(raw, "GB"))
+	case strings.HasSuffix(raw, "MB"):
+		mult = 1 << 20
+		raw = strings.TrimSpace(strings.TrimSuffix(raw, "MB"))
+	case strings.HasSuffix(raw, "KB"):
+		mult = 1 << 10
+		raw = strings.TrimSpace(strings.TrimSuffix(raw, "KB"))
+	case strings.HasSuffix(raw, "B"):
+		raw = strings.TrimSpace(strings.TrimSuffix(raw, "B"))
+	}
+	var n int64
+	for _, r := range raw {
+		if r < '0' || r > '9' {
+			return 52428800
+		}
+		n = n*10 + int64(r-'0')
+	}
+	if n <= 0 {
+		return 52428800
+	}
+	return n * mult
 }
