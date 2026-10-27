@@ -116,6 +116,13 @@ func (s *SessionStore) fromBearer(r *http.Request) (uuid.UUID, bool) {
 	return s.decode(token)
 }
 
+// Token encodes a bearer token for the given user id using the same secret,
+// name, and serializer as the session cookie. Useful for minting API tokens
+// for machine accounts (see cmd/mint).
+func (s *SessionStore) Token(userID uuid.UUID) (string, error) {
+	return s.cookie.Encode(s.name, sessionPayload{UserID: userID.String()})
+}
+
 func (s *SessionStore) decode(value string) (uuid.UUID, bool) {
 	var payload sessionPayload
 	if err := s.cookie.Decode(s.name, value, &payload); err != nil {

@@ -39,19 +39,34 @@ type query struct {
 	Sort    string
 }
 
+// NewStoreFromMocks seeds the store with the bundled demo fixtures. Used in
+// test mode and by tests.
 func NewStoreFromMocks() (*Store, error) {
+	return newStore(true)
+}
+
+// NewStoreLive builds the store without demo items or a demo viewer: items
+// come from the attached database and the viewer from the session identity.
+// Sections and categories are still the embedded taxonomy.
+func NewStoreLive() (*Store, error) {
+	return newStore(false)
+}
+
+func newStore(seedItems bool) (*Store, error) {
 	s := &Store{now: time.Now}
-	if err := readEmbedded("mocks/viewer.json", &s.viewer); err != nil {
-		return nil, err
-	}
 	if err := readEmbedded("mocks/sections.json", &s.sections); err != nil {
 		return nil, err
 	}
 	if err := readEmbedded("mocks/categories.json", &s.categories); err != nil {
 		return nil, err
 	}
-	if err := readEmbedded("mocks/items.json", &s.items); err != nil {
-		return nil, err
+	if seedItems {
+		if err := readEmbedded("mocks/viewer.json", &s.viewer); err != nil {
+			return nil, err
+		}
+		if err := readEmbedded("mocks/items.json", &s.items); err != nil {
+			return nil, err
+		}
 	}
 	s.index()
 	s.hydrate()

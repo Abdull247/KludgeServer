@@ -65,7 +65,25 @@ func (h *Handler) Home(w http.ResponseWriter, r *http.Request) {
 	if !h.requireUser(w, r) {
 		return
 	}
-	respond.JSON(w, http.StatusOK, h.store.Home(queryFrom(r)))
+	home := h.store.Home(queryFrom(r))
+	if iden, ok := h.identity(r); ok {
+		home.Viewer = Viewer{
+			ID:           iden.UserID,
+			Username:     iden.Username,
+			FullName:     iden.FullName,
+			GreetingName: greetingName(iden.FullName),
+			AvatarURL:    iden.AvatarURL,
+		}
+	}
+	respond.JSON(w, http.StatusOK, home)
+}
+
+func greetingName(fullName string) string {
+	fields := strings.Fields(strings.TrimSpace(fullName))
+	if len(fields) == 0 {
+		return ""
+	}
+	return fields[0]
 }
 
 func (h *Handler) Section(w http.ResponseWriter, r *http.Request) {

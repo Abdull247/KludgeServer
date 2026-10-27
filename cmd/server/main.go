@@ -59,13 +59,19 @@ func main() {
 }
 
 func serve(cfg *config.Config, authHandler *auth.Handler, profileHandler *profile.Handler, sessions *auth.SessionStore, pool *pgxpool.Pool, profiles *profile.Store) {
-	catStore, err := catalog.NewStoreFromMocks()
+	var catStore *catalog.Store
+	var err error
+	if pool == nil {
+		catStore, err = catalog.NewStoreFromMocks()
+	} else {
+		catStore, err = catalog.NewStoreLive()
+	}
 	if err != nil {
-		log.Fatalf("catalog mocks: %v", err)
+		log.Fatalf("catalog store: %v", err)
 	}
 	if pool != nil {
 		if err := catStore.AttachDB(context.Background(), pool); err != nil {
-			log.Printf("catalog db attach: %v — continuing with mocks", err)
+			log.Printf("catalog db attach: %v — serving empty catalog until rows exist", err)
 		}
 	}
 

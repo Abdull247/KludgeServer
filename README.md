@@ -247,7 +247,9 @@ await fetch(`${api}/api/auth/logout`, {
 
 Home and browse endpoints. Cookie session or `Authorization: Bearer <access-token>`. In `MODE=test` any bearer token authenticates as the mock user.
 
-Mock JSON lives in `internal/catalog/mocks/` (`viewer.json`, `sections.json`, `categories.json`, `items.json`). When `MODE=test` (or `MODE=js`) the API serves these files instead of Postgres.
+Mock JSON lives in `internal/catalog/mocks/` (`viewer.json`, `sections.json`, `categories.json`, `items.json`). When `MODE=test` (or `MODE=js`) the API serves these demo files instead of Postgres.
+
+In `MODE=live` the catalog serves only what is in the `catalog_items` table: no demo items and no demo viewer. Sections and categories are still the embedded taxonomy. The home viewer comes from the signed-in session. New rows come in through `POST /api/v1/items` (user) or `POST /api/v1/items/record` (automation).
 
 Trending ranks items by recency (exponential decay over ~10 days) plus saves, likes, forks, and pulls.
 
