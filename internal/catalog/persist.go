@@ -106,6 +106,7 @@ func (r catalogItemRow) toItem() Item {
 		Version:      r.Version,
 		BuildArtwork: r.BuildArtwork,
 		Banners:      banners,
+		GalleryKind:  GalleryKindFor(r.Type),
 		CategoryID:   r.CategoryID,
 		SectionID:    r.SectionID,
 		SourceURL:    r.SourceURL,

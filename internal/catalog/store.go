@@ -139,6 +139,9 @@ func (s *Store) hydrate() {
 		if it.Tags == nil {
 			it.Tags = []string{}
 		}
+		if it.GalleryKind == "" {
+			it.GalleryKind = GalleryKindFor(it.Type)
+		}
 		counts[it.CategoryID]++
 		secCounts[it.SectionID]++
 	}

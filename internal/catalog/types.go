@@ -69,6 +69,7 @@ type Item struct {
 	Version       string      `json:"version,omitempty"`
 	BuildArtwork  string      `json:"buildArtwork"`
 	Banners       []string    `json:"banners,omitempty"`
+	GalleryKind   string      `json:"galleryKind"`
 	CategoryID    string      `json:"categoryId"`
 	SectionID     string      `json:"sectionId"`
 	Category      CategoryRef `json:"category"`

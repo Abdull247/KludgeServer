@@ -197,6 +197,7 @@ func (s *Store) Create(ctx context.Context, in CreateInput, pub Publisher) (Item
 		Version:      strings.TrimSpace(in.Version),
 		BuildArtwork: in.ArtworkURL,
 		Banners:      banners,
+		GalleryKind:  def.GalleryKind,
 		CategoryID:   def.CategoryID,
 		SectionID:    def.SectionID,
 		Publisher:    &pub,

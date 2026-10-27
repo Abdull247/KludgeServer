@@ -98,6 +98,16 @@ func TestTypesRoute(t *testing.T) {
 	if len(env.Data) != 12 {
 		t.Fatalf("types %d", len(env.Data))
 	}
+	var apk *ItemTypeDef
+	for i := range env.Data {
+		if env.Data[i].Slug == "modded_apk" {
+			apk = &env.Data[i]
+			break
+		}
+	}
+	if apk == nil || apk.GalleryKind != GalleryScreenshots {
+		t.Fatalf("apk type gallery: %+v", apk)
+	}
 }
 
 func TestTagsRoute(t *testing.T) {
@@ -177,6 +187,9 @@ func TestCreateItemOK(t *testing.T) {
 	}
 	if env.Data.CategoryID != "cat_modded_apk" || env.Data.SectionID != "sec_builds" {
 		t.Fatalf("taxonomy miss: %+v", env.Data)
+	}
+	if env.Data.GalleryKind != GalleryScreenshots {
+		t.Fatalf("apk gallery kind: %q", env.Data.GalleryKind)
 	}
 	if env.Data.Publisher == nil || env.Data.Publisher.Kind != PublisherKindUser || env.Data.Publisher.Username != "ada" {
 		t.Fatalf("unexpected publisher: %+v", env.Data.Publisher)
@@ -265,6 +278,9 @@ func TestRecordItemOKForAutomation(t *testing.T) {
 	}
 	if env.Data.Type != "unofficial_api" || env.Data.CategoryID != "cat_agentic_api" || env.Data.SectionID != "sec_apis" {
 		t.Fatalf("taxonomy miss: %+v", env.Data)
+	}
+	if env.Data.GalleryKind != GalleryBanners {
+		t.Fatalf("api gallery kind: %q", env.Data.GalleryKind)
 	}
 	if env.Data.Publisher == nil || env.Data.Publisher.Kind != PublisherKindAutomation {
 		t.Fatalf("unexpected publisher: %+v", env.Data.Publisher)
