@@ -49,3 +49,10 @@ type ProjectList struct {
 	Projects []catalog.Item `json:"projects"`
 	Total    int            `json:"total"`
 }
+
+// RequestList wraps pending verification items.
+type RequestList struct {
+	Items      []catalog.Item     `json:"items"`
+	Pagination catalog.Pagination `json:"pagination"`
+	Total      int                `json:"total"`
+}

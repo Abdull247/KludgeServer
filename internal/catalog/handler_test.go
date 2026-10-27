@@ -33,7 +33,7 @@ func (s stubIdentity) ByUserID(context.Context, uuid.UUID) (Identity, bool) {
 func testHandler(t *testing.T, authed bool) *Handler {
 	t.Helper()
 	s := testStore(t)
-	return NewHandler(s, stubSession{id: uuid.MustParse("00000000-0000-4000-8000-000000000001"), ok: authed}, nil, "ada@kludge.dev")
+	return NewHandler(s, stubSession{id: uuid.MustParse("00000000-0000-4000-8000-000000000001"), ok: authed}, nil, "ada@kludge.dev", []string{"ada@kludge.dev"})
 }
 
 func TestHomeUnauthorized(t *testing.T) {
@@ -294,18 +294,25 @@ func TestCreateItemOK(t *testing.T) {
 	if len(env.Data.Tags) != 2 || env.Data.Tags[0] != "weekend drop" {
 		t.Fatalf("unexpected tags: %+v", env.Data.Tags)
 	}
+	if env.Data.VerificationStatus != VerificationPending {
+		t.Fatalf("expected pending, got %q", env.Data.VerificationStatus)
+	}
 
 	home := h.store.Home(query{Page: 1, PerPage: 50})
-	found := false
 	for _, sec := range home.Sections {
 		for _, it := range sec.Feed.Items {
 			if it.ID == env.Data.ID {
-				found = true
+				t.Fatal("pending item leaked into public home feed")
 			}
 		}
 	}
-	if !found {
-		t.Fatal("created item missing from home feed")
+
+	owned, ok := h.store.GetFor(env.Data.ID, "usr_ada", false)
+	if !ok || owned.ID != env.Data.ID {
+		t.Fatal("owner should see their pending item")
+	}
+	if _, ok := h.store.GetFor(env.Data.ID, "usr_other", false); ok {
+		t.Fatal("stranger should not see a pending item")
 	}
 }
 
@@ -331,7 +338,7 @@ func TestCreateItemBadPayload(t *testing.T) {
 
 func TestRecordItemNotConfigured(t *testing.T) {
 	s := testStore(t)
-	h := NewHandler(s, stubSession{id: uuid.MustParse("00000000-0000-4000-8000-000000000001"), ok: true}, nil, "")
+	h := NewHandler(s, stubSession{id: uuid.MustParse("00000000-0000-4000-8000-000000000001"), ok: true}, nil, "", nil)
 	req := httptest.NewRequest(http.MethodPost, "/items/record", newCreateBody("Ingest Drop", "unofficial_api"))
 	rec := httptest.NewRecorder()
 	h.RecordItem(rec, req)
@@ -345,7 +352,7 @@ func TestRecordItemForbiddenForNonAutomation(t *testing.T) {
 	h := NewHandler(s, stubSession{id: uuid.MustParse("00000000-0000-4000-8000-000000000001"), ok: true}, stubIdentity{
 		iden: Identity{UserID: "usr_x", Email: "human@example.com", Username: "human"},
 		ok:   true,
-	}, "ingest@kludge.dev")
+	}, "ingest@kludge.dev", nil)
 	req := httptest.NewRequest(http.MethodPost, "/items/record", newCreateBody("Ingest Drop", "unofficial_api"))
 	rec := httptest.NewRecorder()
 	h.RecordItem(rec, req)
@@ -359,7 +366,7 @@ func TestRecordItemOKForAutomation(t *testing.T) {
 	h := NewHandler(s, stubSession{id: uuid.MustParse("00000000-0000-4000-8000-000000000001"), ok: true}, stubIdentity{
 		iden: Identity{UserID: "usr_bot", Email: "ingest@kludge.dev", Username: "kludge-ingest", FullName: "Kludge Ingest"},
 		ok:   true,
-	}, "Ingest@Kludge.dev")
+	}, "Ingest@Kludge.dev", nil)
 	r := createRouter(h)
 	req := httptest.NewRequest(http.MethodPost, "/items/record", newCreateBody("Ingest Drop", "unofficial_api"))
 	rec := httptest.NewRecorder()
@@ -381,5 +388,8 @@ func TestRecordItemOKForAutomation(t *testing.T) {
 	}
 	if env.Data.Publisher == nil || env.Data.Publisher.Kind != PublisherKindAutomation {
 		t.Fatalf("unexpected publisher: %+v", env.Data.Publisher)
+	}
+	if env.Data.VerificationStatus != VerificationVerified {
+		t.Fatalf("automation ingest should be verified, got %q", env.Data.VerificationStatus)
 	}
 }

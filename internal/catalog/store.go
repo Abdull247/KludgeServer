@@ -32,12 +32,14 @@ type Store struct {
 	secBySlug  map[string]int
 }
 
-type query struct {
+type Query struct {
 	Page    int
 	PerPage int
 	Q       string
 	Sort    string
 }
+
+type query = Query
 
 // NewStoreFromMocks seeds the store with the bundled demo fixtures. Used in
 // test mode and by tests.
@@ -137,8 +139,10 @@ func (s *Store) hydrate() {
 		}
 		it.Metric = metricFor(*it)
 		enrichItem(it)
-		counts[it.CategoryID]++
-		secCounts[it.SectionID]++
+		if isPublic(*it) {
+			counts[it.CategoryID]++
+			secCounts[it.SectionID]++
+		}
 	}
 	for i := range s.categories {
 		s.categories[i].ItemCount = counts[s.categories[i].ID]
@@ -175,7 +179,7 @@ func (s *Store) Home(q query) Home {
 	}
 
 	builds := s.itemsForSection("sec_builds")
-	all := decorate(cloneItems(s.items), now)
+	all := decorate(publicItems(cloneItems(s.items)), now)
 	collections := filterKind(all, "collection")
 	if len(collections) == 0 {
 		collections = filterType(all, "collection")
@@ -261,7 +265,7 @@ func (s *Store) Collections(q query) Rail {
 	defer s.mu.RUnlock()
 	now := s.now()
 	page, per := pageSize(q, 12)
-	items := filterType(filterItems(decorate(cloneItems(s.items), now), q.Q), "collection")
+	items := filterType(filterItems(decorate(publicItems(cloneItems(s.items)), now), q.Q), "collection")
 	return railFrom("rail_collections", "collections", "Collections to steal", "Packed shelves from people who ship.", "saves_desc", "/api/v1/collections", items, page, per)
 }
 
@@ -270,7 +274,7 @@ func (s *Store) Search(q query) ItemPage {
 	defer s.mu.RUnlock()
 	now := s.now()
 	page, per := pageSize(q, 12)
-	items := sortTrending(filterItems(decorate(cloneItems(s.items), now), q.Q), now)
+	items := sortTrending(filterItems(decorate(publicItems(cloneItems(s.items)), now), q.Q), now)
 	return paginate(items, page, per)
 }
 
@@ -349,7 +353,7 @@ func (s *Store) section(idOrSlug string) (Section, bool) {
 func (s *Store) itemsForSection(sectionID string) []Item {
 	out := make([]Item, 0)
 	for _, it := range s.items {
-		if it.SectionID == sectionID && it.Type != "collection" {
+		if it.SectionID == sectionID && it.Type != "collection" && isPublic(it) {
 			out = append(out, it)
 		}
 	}
@@ -359,7 +363,7 @@ func (s *Store) itemsForSection(sectionID string) []Item {
 func (s *Store) itemsForCategory(categoryID string) []Item {
 	out := make([]Item, 0)
 	for _, it := range s.items {
-		if it.CategoryID == categoryID {
+		if it.CategoryID == categoryID && isPublic(it) {
 			out = append(out, it)
 		}
 	}
@@ -436,10 +440,14 @@ func filterKind(items []Item, t string) []Item {
 	return out
 }
 
-func parseQuery(pageS, perS, q, sort string) query {
+func ParseQuery(pageS, perS, q, sort string) Query {
 	page, _ := strconv.Atoi(pageS)
 	per, _ := strconv.Atoi(perS)
-	return query{Page: page, PerPage: per, Q: q, Sort: sort}
+	return Query{Page: page, PerPage: per, Q: q, Sort: sort}
+}
+
+func parseQuery(pageS, perS, q, sort string) query {
+	return ParseQuery(pageS, perS, q, sort)
 }
 
 func pageSize(q query, fallback int) (int, int) {

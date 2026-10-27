@@ -23,15 +23,41 @@ type Handler struct {
 	sessions        SessionReader
 	identities      IdentityLookup
 	automationEmail string
+	adminEmails     []string
 }
 
-func NewHandler(store *Store, sessions SessionReader, identities IdentityLookup, automationEmail string) *Handler {
+func NewHandler(store *Store, sessions SessionReader, identities IdentityLookup, automationEmail string, adminEmails []string) *Handler {
+	lowered := make([]string, 0, len(adminEmails))
+	for _, e := range adminEmails {
+		if e = strings.ToLower(strings.TrimSpace(e)); e != "" {
+			lowered = append(lowered, e)
+		}
+	}
 	return &Handler{
 		store:           store,
 		sessions:        sessions,
 		identities:      identities,
 		automationEmail: strings.ToLower(strings.TrimSpace(automationEmail)),
+		adminEmails:     lowered,
 	}
+}
+
+func (h *Handler) isAdmin(iden Identity) bool {
+	email := strings.ToLower(strings.TrimSpace(iden.Email))
+	for _, e := range h.adminEmails {
+		if e == email {
+			return true
+		}
+	}
+	return false
+}
+
+func (h *Handler) viewer(r *http.Request) (userID string, admin bool) {
+	iden, ok := h.identity(r)
+	if !ok {
+		return "", false
+	}
+	return iden.UserID, h.isAdmin(iden)
 }
 
 // identity resolves the person behind the session into a catalog Identity.
@@ -141,7 +167,8 @@ func (h *Handler) Item(w http.ResponseWriter, r *http.Request) {
 	if !h.requireUser(w, r) {
 		return
 	}
-	it, ok := h.store.Get(chi.URLParam(r, "id"))
+	userID, admin := h.viewer(r)
+	it, ok := h.store.GetFor(chi.URLParam(r, "id"), userID, admin)
 	if !ok {
 		respond.Error(w, http.StatusNotFound, "item not found")
 		return
@@ -151,6 +178,11 @@ func (h *Handler) Item(w http.ResponseWriter, r *http.Request) {
 
 func (h *Handler) Recommends(w http.ResponseWriter, r *http.Request) {
 	if !h.requireUser(w, r) {
+		return
+	}
+	userID, admin := h.viewer(r)
+	if _, ok := h.store.GetFor(chi.URLParam(r, "id"), userID, admin); !ok {
+		respond.Error(w, http.StatusNotFound, "item not found")
 		return
 	}
 	res, ok := h.store.Recommends(chi.URLParam(r, "id"), 8)
@@ -171,6 +203,11 @@ func (h *Handler) Like(w http.ResponseWriter, r *http.Request) {
 
 func (h *Handler) toggle(w http.ResponseWriter, r *http.Request, action string) {
 	if !h.requireUser(w, r) {
+		return
+	}
+	userID, admin := h.viewer(r)
+	if _, ok := h.store.GetFor(chi.URLParam(r, "id"), userID, admin); !ok {
+		respond.Error(w, http.StatusNotFound, "item not found")
 		return
 	}
 	res, ok := h.store.Toggle(chi.URLParam(r, "id"), action)
@@ -305,4 +342,44 @@ func (h *Handler) Types(w http.ResponseWriter, r *http.Request) {
 // Tags returns the editable chip list from data/tags.json.
 func (h *Handler) Tags(w http.ResponseWriter, r *http.Request) {
 	respond.JSON(w, http.StatusOK, loadTags())
+}
+
+type itemList struct {
+	Items []Item `json:"items"`
+	Total int    `json:"total"`
+}
+
+// Me returns the signed-in user's library: stats, publications, saved, liked,
+// plus any pending or rejected verification rows.
+func (h *Handler) Me(w http.ResponseWriter, r *http.Request) {
+	if !h.requireUser(w, r) {
+		return
+	}
+	iden, ok := h.identity(r)
+	if !ok {
+		respond.Error(w, http.StatusForbidden, "profile not found for session user")
+		return
+	}
+	respond.JSON(w, http.StatusOK, h.store.Profile(iden))
+}
+
+func (h *Handler) MyPending(w http.ResponseWriter, r *http.Request) {
+	h.ownedList(w, r, VerificationPending)
+}
+
+func (h *Handler) MyRejected(w http.ResponseWriter, r *http.Request) {
+	h.ownedList(w, r, VerificationRejected)
+}
+
+func (h *Handler) ownedList(w http.ResponseWriter, r *http.Request, status string) {
+	if !h.requireUser(w, r) {
+		return
+	}
+	iden, ok := h.identity(r)
+	if !ok {
+		respond.Error(w, http.StatusForbidden, "profile not found for session user")
+		return
+	}
+	items := h.store.Owned(iden.UserID, status)
+	respond.JSON(w, http.StatusOK, itemList{Items: items, Total: len(items)})
 }

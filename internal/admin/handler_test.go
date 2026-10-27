@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 
 	"github.com/Abdull247/KludgeServer/internal/catalog"
@@ -148,5 +149,82 @@ func TestAdminUsersAndProjects(t *testing.T) {
 		if p.Kind != "build" && p.Kind != "api" {
 			t.Fatalf("non-project kind leaked: %s", p.Kind)
 		}
+	}
+}
+
+func TestAdminVerifyAndReject(t *testing.T) {
+	h := adminHandler(t, []string{"ada@kludge.dev"}, nil, true)
+	item, err := h.store.Create(context.Background(), catalog.CreateInput{
+		Name:        "Locked Drop",
+		Description: "Waiting on review.",
+		Type:        "modded_apk",
+		ArtworkURL:  "https://images.example.com/art/cover.png",
+	}, catalog.Publisher{ID: "usr_ken", Username: "ken", Kind: catalog.PublisherKindUser})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if item.VerificationStatus != catalog.VerificationPending {
+		t.Fatalf("status %s", item.VerificationStatus)
+	}
+
+	r := chi.NewRouter()
+	r.Get("/api/v1/admin/requests", h.Requests)
+	r.Post("/api/v1/admin/items/{id}/verify", h.Verify)
+	r.Post("/api/v1/admin/items/{id}/reject", h.Reject)
+
+	req := httptest.NewRequest(http.MethodGet, "/api/v1/admin/requests", nil)
+	rec := httptest.NewRecorder()
+	r.ServeHTTP(rec, req)
+	if rec.Code != http.StatusOK {
+		t.Fatalf("requests status %d", rec.Code)
+	}
+	var list struct {
+		Data RequestList `json:"data"`
+	}
+	if err := json.Unmarshal(rec.Body.Bytes(), &list); err != nil {
+		t.Fatal(err)
+	}
+	found := false
+	for _, it := range list.Data.Items {
+		if it.ID == item.ID {
+			found = true
+		}
+	}
+	if !found {
+		t.Fatal("pending item missing from requests")
+	}
+
+	req = httptest.NewRequest(http.MethodPost, "/api/v1/admin/items/"+item.ID+"/verify", nil)
+	rec = httptest.NewRecorder()
+	r.ServeHTTP(rec, req)
+	if rec.Code != http.StatusOK {
+		t.Fatalf("verify status %d body %s", rec.Code, rec.Body.String())
+	}
+	got, ok := h.store.GetFor(item.ID, "", false)
+	if !ok || got.VerificationStatus != catalog.VerificationVerified {
+		t.Fatalf("expected public after verify: %+v", got)
+	}
+
+	other, err := h.store.Create(context.Background(), catalog.CreateInput{
+		Name:        "Noisy Drop",
+		Description: "Will be rejected.",
+		Type:        "unofficial_api",
+		ArtworkURL:  "https://images.example.com/art/cover.png",
+	}, catalog.Publisher{ID: "usr_ken", Username: "ken", Kind: catalog.PublisherKindUser})
+	if err != nil {
+		t.Fatal(err)
+	}
+	req = httptest.NewRequest(http.MethodPost, "/api/v1/admin/items/"+other.ID+"/reject", strings.NewReader(`{"reason":"hashes do not match"}`))
+	rec = httptest.NewRecorder()
+	r.ServeHTTP(rec, req)
+	if rec.Code != http.StatusOK {
+		t.Fatalf("reject status %d body %s", rec.Code, rec.Body.String())
+	}
+	got, ok = h.store.GetFor(other.ID, "usr_ken", false)
+	if !ok || got.VerificationStatus != catalog.VerificationRejected || got.RejectionReason != "hashes do not match" {
+		t.Fatalf("expected rejected with reason: %+v", got)
+	}
+	if _, ok := h.store.GetFor(other.ID, "", false); ok {
+		t.Fatal("rejected item should stay private")
 	}
 }

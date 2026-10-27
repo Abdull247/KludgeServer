@@ -82,7 +82,7 @@ func serve(cfg *config.Config, authHandler *auth.Handler, profileHandler *profil
 	if profiles != nil {
 		identities = profileIdentityAdapter{profiles: profiles}
 	}
-	catHandler := catalog.NewHandler(catStore, sessions, identities, cfg.AutomationEmail)
+	catHandler := catalog.NewHandler(catStore, sessions, identities, cfg.AutomationEmail, cfg.AdminEmails)
 	adminHandler := admin.NewHandler(catStore, pool, sessions, identities, cfg.AdminEmails)
 	uploadHandler := upload.NewHandler(sessions, storage.New(cfg), cfg)
 

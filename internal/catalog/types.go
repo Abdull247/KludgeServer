@@ -33,6 +33,8 @@ type ItemStats struct {
 type ViewerState struct {
 	Saved bool `json:"saved"`
 	Liked bool `json:"liked"`
+	Owner bool `json:"owner"`
+	Admin bool `json:"admin"`
 }
 
 type CreatorRef struct {
@@ -57,38 +59,41 @@ type SubItem struct {
 }
 
 type Item struct {
-	ID            string      `json:"id"`
-	Slug          string      `json:"slug"`
-	Name          string      `json:"name"`
-	Type          string      `json:"type"`
-	Kind          string      `json:"kind"`
-	Mark          string      `json:"mark"`
-	Tone          string      `json:"tone"`
-	Blurb         string      `json:"blurb"`
-	Description   string      `json:"description"`
-	Version       string      `json:"version,omitempty"`
-	SizeBytes     int64       `json:"sizeBytes,omitempty"`
-	SizeDisplay   string      `json:"sizeDisplay,omitempty"`
-	Downloads     int         `json:"downloads"`
-	TypeLabel     string      `json:"typeLabel,omitempty"`
-	BuildArtwork  string      `json:"buildArtwork"`
-	Banners       []string    `json:"banners,omitempty"`
-	GalleryKind   string      `json:"galleryKind"`
-	CategoryID    string      `json:"categoryId"`
-	SectionID     string      `json:"sectionId"`
-	Category      CategoryRef `json:"category"`
-	Stats         ItemStats   `json:"stats"`
-	Metric        Metric      `json:"metric"`
-	Viewer        ViewerState `json:"viewer"`
-	Creator       *CreatorRef `json:"creator,omitempty"`
-	Publisher     *Publisher  `json:"publisher,omitempty"`
-	PublisherID   string      `json:"-"`
-	SourceURL     string      `json:"sourceUrl,omitempty"`
-	Tags          []string    `json:"tags"`
-	SubItems      []SubItem   `json:"subItems,omitempty"`
-	PublishedAt   time.Time   `json:"publishedAt"`
-	UpdatedAt     time.Time   `json:"updatedAt"`
-	TrendingScore float64     `json:"trendingScore"`
+	ID                 string      `json:"id"`
+	Slug               string      `json:"slug"`
+	Name               string      `json:"name"`
+	Type               string      `json:"type"`
+	Kind               string      `json:"kind"`
+	Mark               string      `json:"mark"`
+	Tone               string      `json:"tone"`
+	Blurb              string      `json:"blurb"`
+	Description        string      `json:"description"`
+	Version            string      `json:"version,omitempty"`
+	SizeBytes          int64       `json:"sizeBytes,omitempty"`
+	SizeDisplay        string      `json:"sizeDisplay,omitempty"`
+	Downloads          int         `json:"downloads"`
+	TypeLabel          string      `json:"typeLabel,omitempty"`
+	BuildArtwork       string      `json:"buildArtwork"`
+	Banners            []string    `json:"banners,omitempty"`
+	GalleryKind        string      `json:"galleryKind"`
+	CategoryID         string      `json:"categoryId"`
+	SectionID          string      `json:"sectionId"`
+	Category           CategoryRef `json:"category"`
+	Stats              ItemStats   `json:"stats"`
+	Metric             Metric      `json:"metric"`
+	Viewer             ViewerState `json:"viewer"`
+	Creator            *CreatorRef `json:"creator,omitempty"`
+	Publisher          *Publisher  `json:"publisher,omitempty"`
+	PublisherID        string      `json:"-"`
+	SourceURL          string      `json:"sourceUrl,omitempty"`
+	Tags               []string    `json:"tags"`
+	SubItems           []SubItem   `json:"subItems,omitempty"`
+	PublishedAt        time.Time   `json:"publishedAt"`
+	UpdatedAt          time.Time   `json:"updatedAt"`
+	TrendingScore      float64     `json:"trendingScore"`
+	VerificationStatus string      `json:"verificationStatus"`
+	RejectionReason    string      `json:"rejectionReason,omitempty"`
+	VerifiedAt         *time.Time  `json:"verifiedAt,omitempty"`
 }
 
 type Category struct {

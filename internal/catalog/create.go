@@ -16,6 +16,10 @@ import (
 const (
 	PublisherKindUser       = "user"
 	PublisherKindAutomation = "automation"
+
+	VerificationPending  = "pending"
+	VerificationVerified = "verified"
+	VerificationRejected = "rejected"
 )
 
 type Publisher struct {
@@ -185,26 +189,32 @@ func (s *Store) Create(ctx context.Context, in CreateInput, pub Publisher) (Item
 	}
 
 	it := Item{
-		ID:           "itm_" + slugify(name) + randomSuffix(4),
-		Slug:         s.uniqueSlug(name),
-		Name:         name,
-		Type:         def.Slug,
-		Kind:         def.Kind,
-		Mark:         firstUpper(name),
-		Tone:         toneFor(len(s.items)),
-		Blurb:        truncate(desc, 180),
-		Description:  desc,
-		Version:      strings.TrimSpace(in.Version),
-		BuildArtwork: in.ArtworkURL,
-		Banners:      banners,
-		GalleryKind:  def.GalleryKind,
-		CategoryID:   def.CategoryID,
-		SectionID:    def.SectionID,
-		Publisher:    &pub,
-		SourceURL:    strings.TrimSpace(in.SourceURL),
-		Tags:         tags,
-		PublishedAt:  published,
-		UpdatedAt:    now,
+		ID:                 "itm_" + slugify(name) + randomSuffix(4),
+		Slug:               s.uniqueSlug(name),
+		Name:               name,
+		Type:               def.Slug,
+		Kind:               def.Kind,
+		Mark:               firstUpper(name),
+		Tone:               toneFor(len(s.items)),
+		Blurb:              truncate(desc, 180),
+		Description:        desc,
+		Version:            strings.TrimSpace(in.Version),
+		BuildArtwork:       in.ArtworkURL,
+		Banners:            banners,
+		GalleryKind:        def.GalleryKind,
+		CategoryID:         def.CategoryID,
+		SectionID:          def.SectionID,
+		Publisher:          &pub,
+		PublisherID:        pub.ID,
+		SourceURL:          strings.TrimSpace(in.SourceURL),
+		Tags:               tags,
+		PublishedAt:        published,
+		UpdatedAt:          now,
+		VerificationStatus: VerificationPending,
+	}
+	if pub.Kind == PublisherKindAutomation {
+		it.VerificationStatus = VerificationVerified
+		it.VerifiedAt = &now
 	}
 	it.Metric = metricFor(it)
 	enrichItem(&it)
@@ -224,9 +234,11 @@ func (s *Store) Create(ctx context.Context, in CreateInput, pub Publisher) (Item
 	if idx, ok := s.catByID[def.CategoryID]; ok {
 		c := s.categories[idx]
 		it.Category = CategoryRef{ID: c.ID, Slug: c.Slug, Name: c.Name}
-		s.categories[idx].ItemCount++
+		if isPublic(it) {
+			s.categories[idx].ItemCount++
+		}
 	}
-	if idx, ok := s.secByID[def.SectionID]; ok {
+	if idx, ok := s.secByID[def.SectionID]; ok && isPublic(it) {
 		s.sections[idx].ItemCount++
 	}
 

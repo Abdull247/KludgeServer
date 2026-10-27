@@ -16,6 +16,9 @@ SELECT
     ci.blurb, ci.description, ci.version, ci.build_artwork, ci.banners,
     ci.category_id, ci.section_id, ci.stats, ci.publisher_id, ci.source_url,
     ci.tags, ci.published_at, ci.updated_at,
+    COALESCE(ci.verification_status, 'verified'),
+    COALESCE(ci.rejection_reason, ''),
+    ci.verified_at,
     p.username, p.full_name, p.avatar_url
 FROM catalog_items ci
 LEFT JOIN profiles p ON p.user_id = ci.publisher_id
@@ -61,29 +64,32 @@ func (s *Store) mergeItems(items []Item) {
 }
 
 type catalogItemRow struct {
-	ID           string
-	Slug         string
-	Name         string
-	Type         string
-	Kind         string
-	Mark         string
-	Tone         string
-	Blurb        string
-	Description  string
-	Version      string
-	BuildArtwork string
-	Banners      []byte
-	CategoryID   string
-	SectionID    string
-	Stats        []byte
-	PublisherID  *uuid.UUID
-	SourceURL    string
-	Tags         []byte
-	PublishedAt  time.Time
-	UpdatedAt    time.Time
-	PUsername    *string
-	PFullName    *string
-	PAvatarURL   *string
+	ID                 string
+	Slug               string
+	Name               string
+	Type               string
+	Kind               string
+	Mark               string
+	Tone               string
+	Blurb              string
+	Description        string
+	Version            string
+	BuildArtwork       string
+	Banners            []byte
+	CategoryID         string
+	SectionID          string
+	Stats              []byte
+	PublisherID        *uuid.UUID
+	SourceURL          string
+	Tags               []byte
+	PublishedAt        time.Time
+	UpdatedAt          time.Time
+	VerificationStatus string
+	RejectionReason    string
+	VerifiedAt         *time.Time
+	PUsername          *string
+	PFullName          *string
+	PAvatarURL         *string
 }
 
 func (r catalogItemRow) toItem() Item {
@@ -94,25 +100,28 @@ func (r catalogItemRow) toItem() Item {
 	_ = json.Unmarshal(r.Tags, &tags)
 
 	it := Item{
-		ID:           r.ID,
-		Slug:         r.Slug,
-		Name:         r.Name,
-		Type:         r.Type,
-		Kind:         r.Kind,
-		Mark:         r.Mark,
-		Tone:         r.Tone,
-		Blurb:        r.Blurb,
-		Description:  r.Description,
-		Version:      r.Version,
-		BuildArtwork: r.BuildArtwork,
-		Banners:      banners,
-		GalleryKind:  GalleryKindFor(r.Type),
-		CategoryID:   r.CategoryID,
-		SectionID:    r.SectionID,
-		SourceURL:    r.SourceURL,
-		Tags:         tags,
-		PublishedAt:  r.PublishedAt,
-		UpdatedAt:    r.UpdatedAt,
+		ID:                 r.ID,
+		Slug:               r.Slug,
+		Name:               r.Name,
+		Type:               r.Type,
+		Kind:               r.Kind,
+		Mark:               r.Mark,
+		Tone:               r.Tone,
+		Blurb:              r.Blurb,
+		Description:        r.Description,
+		Version:            r.Version,
+		BuildArtwork:       r.BuildArtwork,
+		Banners:            banners,
+		GalleryKind:        GalleryKindFor(r.Type),
+		CategoryID:         r.CategoryID,
+		SectionID:          r.SectionID,
+		SourceURL:          r.SourceURL,
+		Tags:               tags,
+		PublishedAt:        r.PublishedAt,
+		UpdatedAt:          r.UpdatedAt,
+		VerificationStatus: r.VerificationStatus,
+		RejectionReason:    r.RejectionReason,
+		VerifiedAt:         r.VerifiedAt,
 	}
 	if err := json.Unmarshal(r.Stats, &it.Stats); err != nil {
 		it.Stats = ItemStats{}
@@ -160,6 +169,7 @@ func loadCatalogRows(ctx context.Context, pool *pgxpool.Pool) ([]catalogItemRow,
 			&r.Blurb, &r.Description, &r.Version, &r.BuildArtwork, &r.Banners,
 			&r.CategoryID, &r.SectionID, &r.Stats, &r.PublisherID, &r.SourceURL,
 			&r.Tags, &r.PublishedAt, &r.UpdatedAt,
+			&r.VerificationStatus, &r.RejectionReason, &r.VerifiedAt,
 			&r.PUsername, &r.PFullName, &r.PAvatarURL,
 		); err != nil {
 			return nil, fmt.Errorf("scan catalog item: %w", err)
@@ -193,11 +203,13 @@ func (s *Store) insertItem(ctx context.Context, it Item, pubID *uuid.UUID) (stri
 		INSERT INTO catalog_items (
 			id, slug, name, type, kind, mark, tone, blurb, description,
 			version, build_artwork, banners, category_id, section_id,
-			publisher_id, source_url, tags, stats, published_at, updated_at
+			publisher_id, source_url, tags, stats, published_at, updated_at,
+			verification_status, rejection_reason, verified_at
 		) VALUES (
 			$1, $2, $3, $4, $5, $6, $7, $8, $9,
 			$10, $11, $12::jsonb, $13, $14,
-			$15, $16, $17::jsonb, $18::jsonb, $19, $20
+			$15, $16, $17::jsonb, $18::jsonb, $19, $20,
+			$21, $22, $23
 		)
 		RETURNING id
 	`,
@@ -205,6 +217,7 @@ func (s *Store) insertItem(ctx context.Context, it Item, pubID *uuid.UUID) (stri
 		it.Description, it.Version, it.BuildArtwork, string(banners),
 		it.CategoryID, it.SectionID, pubID, it.SourceURL, string(tags),
 		string(stats), it.PublishedAt, it.UpdatedAt,
+		it.VerificationStatus, it.RejectionReason, it.VerifiedAt,
 	).Scan(&id)
 	if err != nil {
 		return "", fmt.Errorf("insert catalog item: %w", err)

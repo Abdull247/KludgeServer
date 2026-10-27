@@ -71,6 +71,9 @@ func enrichItem(it *Item) {
 	if it.Tags == nil {
 		it.Tags = []string{}
 	}
+	if it.VerificationStatus == "" {
+		it.VerificationStatus = VerificationVerified
+	}
 }
 
 func (s *Store) lookup(idOrSlug string) (int, bool) {
@@ -157,6 +160,9 @@ func (s *Store) Recommends(idOrSlug string, limit int) (RecommendResult, bool) {
 		if i == idx {
 			continue
 		}
+		if !isPublic(it) {
+			continue
+		}
 		if it.Type == "collection" && seed.Type != "collection" {
 			continue
 		}
@@ -187,7 +193,7 @@ func (s *Store) Recommends(idOrSlug string, limit int) (RecommendResult, bool) {
 	}
 
 	if len(out) < limit {
-		extras := sortTrending(cloneItems(s.items), now)
+		extras := sortTrending(publicItems(cloneItems(s.items)), now)
 		for _, it := range extras {
 			if seen[it.ID] || (it.Type == "collection" && seed.Type != "collection") {
 				continue

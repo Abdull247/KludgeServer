@@ -1,6 +1,8 @@
 package admin
 
 import (
+	"encoding/json"
+	"errors"
 	"net/http"
 	"sort"
 	"strings"
@@ -8,6 +10,7 @@ import (
 
 	"github.com/Abdull247/KludgeServer/internal/catalog"
 	"github.com/Abdull247/KludgeServer/internal/respond"
+	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
@@ -132,6 +135,66 @@ func (h *Handler) Projects(w http.ResponseWriter, r *http.Request) {
 	projects, apis := h.splitProjects()
 	all := append(projects, apis...)
 	respond.JSON(w, http.StatusOK, ProjectList{Projects: all, Total: len(all)})
+}
+
+// Requests returns items waiting on admin verification.
+func (h *Handler) Requests(w http.ResponseWriter, r *http.Request) {
+	if _, ok := h.requireAdmin(w, r); !ok {
+		return
+	}
+	q := catalogQuery(r)
+	page := h.store.Pending(q, r.URL.Query().Get("type"))
+	respond.JSON(w, http.StatusOK, RequestList{
+		Items:      page.Items,
+		Pagination: page.Pagination,
+		Total:      page.Pagination.Total,
+	})
+}
+
+type rejectBody struct {
+	Reason string `json:"reason"`
+}
+
+// Verify marks a pending item public.
+func (h *Handler) Verify(w http.ResponseWriter, r *http.Request) {
+	if _, ok := h.requireAdmin(w, r); !ok {
+		return
+	}
+	item, err := h.store.Verify(r.Context(), chi.URLParam(r, "id"))
+	h.respondReview(w, item, err)
+}
+
+// Reject locks a pending item with an admin reason.
+func (h *Handler) Reject(w http.ResponseWriter, r *http.Request) {
+	if _, ok := h.requireAdmin(w, r); !ok {
+		return
+	}
+	var body rejectBody
+	_ = json.NewDecoder(r.Body).Decode(&body)
+	item, err := h.store.Reject(r.Context(), chi.URLParam(r, "id"), body.Reason)
+	h.respondReview(w, item, err)
+}
+
+func (h *Handler) respondReview(w http.ResponseWriter, item catalog.Item, err error) {
+	switch {
+	case err == nil:
+		respond.JSON(w, http.StatusOK, item)
+	case errors.Is(err, catalog.ErrNotFound):
+		respond.Error(w, http.StatusNotFound, "item not found")
+	case errors.Is(err, catalog.ErrNotPending):
+		respond.Error(w, http.StatusConflict, "item is not pending verification")
+	case errors.Is(err, catalog.ErrNeedReason):
+		respond.Error(w, http.StatusBadRequest, "reason is required")
+	case errors.Is(err, catalog.ErrPersist):
+		respond.Error(w, http.StatusInternalServerError, "could not update item")
+	default:
+		respond.Error(w, http.StatusBadRequest, err.Error())
+	}
+}
+
+func catalogQuery(r *http.Request) catalog.Query {
+	q := r.URL.Query()
+	return catalog.ParseQuery(q.Get("page"), q.Get("perPage"), q.Get("q"), q.Get("sort"))
 }
 
 // splitProjects pulls items from the catalog store and separates build-kind
