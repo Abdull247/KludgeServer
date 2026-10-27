@@ -4,13 +4,14 @@ import (
 	"net/http"
 
 	"github.com/Abdull247/KludgeServer/internal/auth"
+	"github.com/Abdull247/KludgeServer/internal/catalog"
 	"github.com/Abdull247/KludgeServer/internal/config"
 	"github.com/Abdull247/KludgeServer/internal/profile"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 )
 
-func NewRouter(cfg *config.Config, authHandler *auth.Handler, profileHandler *profile.Handler) http.Handler {
+func NewRouter(cfg *config.Config, authHandler *auth.Handler, profileHandler *profile.Handler, catalogHandler *catalog.Handler) http.Handler {
 	r := chi.NewRouter()
 
 	r.Use(middleware.RequestID)
@@ -34,6 +35,20 @@ func NewRouter(cfg *config.Config, authHandler *auth.Handler, profileHandler *pr
 			r.Get("/me", profileHandler.Me)
 			r.Post("/onboarding", profileHandler.CompleteOnboarding)
 		})
+
+		if catalogHandler != nil {
+			r.Route("/v1", func(r chi.Router) {
+				r.Get("/home", catalogHandler.Home)
+				r.Get("/sections/{id}", catalogHandler.Section)
+				r.Get("/categories/{id}", catalogHandler.Category)
+				r.Get("/trending", catalogHandler.Trending)
+				r.Get("/dropped", catalogHandler.Dropped)
+				r.Get("/collections", catalogHandler.Collections)
+				r.Get("/search", catalogHandler.Search)
+				r.Post("/items/{id}/save", catalogHandler.Save)
+				r.Post("/items/{id}/like", catalogHandler.Like)
+			})
+		}
 	})
 
 	return r

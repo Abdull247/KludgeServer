@@ -1,0 +1,114 @@
+[
+  {
+    "id": "cat_modded_apk",
+    "slug": "modded-apk",
+    "name": "Modded APK",
+    "description": "Unlocked Android builds with ads stripped and premium flags flipped.",
+    "sectionId": "sec_builds",
+    "href": "/api/v1/categories/cat_modded_apk"
+  },
+  {
+    "id": "cat_frida",
+    "slug": "frida",
+    "name": "Frida",
+    "description": "Ready hooks for SSL pinning, root hide, and receipt validation.",
+    "sectionId": "sec_builds",
+    "href": "/api/v1/categories/cat_frida"
+  },
+  {
+    "id": "cat_custom_rom",
+    "slug": "custom-rom",
+    "name": "Custom ROM",
+    "description": "De-Googled nightlies, signed and hashed.",
+    "sectionId": "sec_builds",
+    "href": "/api/v1/categories/cat_custom_rom"
+  },
+  {
+    "id": "cat_ui_kit",
+    "slug": "ui-kit",
+    "name": "UI Kit",
+    "description": "Figma kits and design systems dropped by working product teams.",
+    "sectionId": "sec_builds",
+    "href": "/api/v1/categories/cat_ui_kit"
+  },
+  {
+    "id": "cat_root",
+    "slug": "root",
+    "name": "Root",
+    "description": "Magisk packs, modules, and boot images.",
+    "sectionId": "sec_builds",
+    "href": "/api/v1/categories/cat_root"
+  },
+  {
+    "id": "cat_prompt",
+    "slug": "prompts",
+    "name": "Prompts",
+    "description": "Jailbreak labs and agent prompt packs.",
+    "sectionId": "sec_builds",
+    "href": "/api/v1/categories/cat_prompt"
+  },
+  {
+    "id": "cat_patch",
+    "slug": "patch",
+    "name": "Patch",
+    "description": "Binary patches, smali diffs, and bypass kits.",
+    "sectionId": "sec_builds",
+    "href": "/api/v1/categories/cat_patch"
+  },
+  {
+    "id": "cat_makers",
+    "slug": "makers",
+    "name": "Makers",
+    "description": "Builders who ship APKs, ROMs, and kits every week.",
+    "sectionId": "sec_creators",
+    "href": "/api/v1/categories/cat_makers"
+  },
+  {
+    "id": "cat_api_authors",
+    "slug": "api-authors",
+    "name": "API authors",
+    "description": "People behind unofficial endpoints and SDKs.",
+    "sectionId": "sec_creators",
+    "href": "/api/v1/categories/cat_api_authors"
+  },
+  {
+    "id": "cat_collectors",
+    "slug": "collectors",
+    "name": "Collectors",
+    "description": "Curators packing weekend drops into stealable shelves.",
+    "sectionId": "sec_creators",
+    "href": "/api/v1/categories/cat_collectors"
+  },
+  {
+    "id": "cat_agentic_api",
+    "slug": "agentic-api",
+    "name": "Agentic API",
+    "description": "Chat endpoints that ignore the usual refusals.",
+    "sectionId": "sec_apis",
+    "href": "/api/v1/categories/cat_agentic_api"
+  },
+  {
+    "id": "cat_graphql",
+    "slug": "graphql",
+    "name": "GraphQL",
+    "description": "Shadow graphs and leaked schemas.",
+    "sectionId": "sec_apis",
+    "href": "/api/v1/categories/cat_graphql"
+  },
+  {
+    "id": "cat_proxy",
+    "slug": "proxy",
+    "name": "Proxy",
+    "description": "Quiet SOCKS and HTTP relays.",
+    "sectionId": "sec_apis",
+    "href": "/api/v1/categories/cat_proxy"
+  },
+  {
+    "id": "cat_sdk",
+    "slug": "sdk",
+    "name": "SDK",
+    "description": "Unofficial client libraries, typed and versioned.",
+    "sectionId": "sec_apis",
+    "href": "/api/v1/categories/cat_sdk"
+  }
+]

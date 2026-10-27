@@ -1,0 +1,26 @@
+[
+  {
+    "id": "sec_builds",
+    "slug": "builds",
+    "kind": "builds",
+    "title": "Builds",
+    "subtitle": "Unofficial APKs, ROMs, kits, and patches people actually ship.",
+    "href": "/api/v1/sections/sec_builds"
+  },
+  {
+    "id": "sec_creators",
+    "slug": "creators",
+    "kind": "creators",
+    "title": "Creators",
+    "subtitle": "The people dropping the kits, APIs, and nightlies.",
+    "href": "/api/v1/sections/sec_creators"
+  },
+  {
+    "id": "sec_apis",
+    "slug": "apis",
+    "kind": "apis",
+    "title": "APIs",
+    "subtitle": "Unofficial endpoints, SDKs, and quiet proxies.",
+    "href": "/api/v1/sections/sec_apis"
+  }
+]

@@ -115,6 +115,11 @@ func (h *Handler) Me(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if h.users == nil {
+		respond.JSON(w, http.StatusOK, TestUser())
+		return
+	}
+
 	u, err := h.users.GetByID(r.Context(), id)
 	if err != nil {
 		respond.Error(w, http.StatusInternalServerError, "could not load user")

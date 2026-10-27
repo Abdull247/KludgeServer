@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/Abdull247/KludgeServer/internal/auth"
+	"github.com/Abdull247/KludgeServer/internal/catalog"
 	"github.com/Abdull247/KludgeServer/internal/config"
 	"github.com/Abdull247/KludgeServer/internal/database"
 	httpx "github.com/Abdull247/KludgeServer/internal/http"
@@ -21,6 +22,15 @@ func main() {
 	cfg, err := config.Load()
 	if err != nil {
 		log.Fatalf("config: %v", err)
+	}
+
+	sessions := auth.NewSessionStore(cfg)
+	auth.ConfigureProviders(cfg)
+
+	if cfg.IsTest() {
+		log.Printf("MODE=test — serving catalog from mock JSON, skipping database")
+		serve(cfg, auth.NewHandler(cfg, nil, nil, sessions), profile.NewHandler(nil, sessions), sessions)
+		return
 	}
 
 	ctx := context.Background()
@@ -36,16 +46,18 @@ func main() {
 
 	users := user.NewStore(pool)
 	profiles := profile.NewStore(pool)
-	sessions := auth.NewSessionStore(cfg)
-	auth.ConfigureProviders(cfg)
-	authHandler := auth.NewHandler(cfg, users, profiles, sessions)
-	profileHandler := profile.NewHandler(profiles, sessions)
+	serve(cfg, auth.NewHandler(cfg, users, profiles, sessions), profile.NewHandler(profiles, sessions), sessions)
+}
 
-	router := httpx.NewRouter(cfg, authHandler, profileHandler)
+func serve(cfg *config.Config, authHandler *auth.Handler, profileHandler *profile.Handler, sessions *auth.SessionStore) {
+	catStore, err := catalog.NewStoreFromMocks()
+	if err != nil {
+		log.Fatalf("catalog mocks: %v", err)
+	}
 
 	srv := &http.Server{
 		Addr:              ":" + cfg.Port,
-		Handler:           router,
+		Handler:           httpx.NewRouter(cfg, authHandler, profileHandler, catalog.NewHandler(catStore, sessions)),
 		ReadHeaderTimeout: 10 * time.Second,
 		ReadTimeout:       30 * time.Second,
 		WriteTimeout:      30 * time.Second,

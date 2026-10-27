@@ -10,6 +10,7 @@ import (
 
 type Config struct {
 	Env                string
+	Mode               string
 	Port               string
 	PublicURL          string
 	FrontendURL        string
@@ -27,6 +28,7 @@ func Load() (*Config, error) {
 
 	cfg := &Config{
 		Env:                get("APP_ENV", "development"),
+		Mode:               strings.ToLower(get("MODE", "live")),
 		Port:               get("APP_PORT", "8080"),
 		PublicURL:          strings.TrimRight(get("APP_PUBLIC_URL", "http://localhost:8080"), "/"),
 		FrontendURL:        strings.TrimRight(get("FRONTEND_URL", "http://localhost:3000"), "/"),
@@ -37,6 +39,16 @@ func Load() (*Config, error) {
 		GitHubClientSecret: os.Getenv("GITHUB_CLIENT_SECRET"),
 		GoogleClientID:     os.Getenv("GOOGLE_CLIENT_ID"),
 		GoogleClientSecret: os.Getenv("GOOGLE_CLIENT_SECRET"),
+	}
+
+	if cfg.IsTest() {
+		if cfg.SessionSecret == "" {
+			cfg.SessionSecret = "test-mode-session-secret-do-not-use-live"
+		}
+		if cfg.DatabaseURL == "" {
+			cfg.DatabaseURL = "postgres://kludge:kludge_dev@127.0.0.1:5432/kludge?sslmode=disable"
+		}
+		return cfg, nil
 	}
 
 	if cfg.DatabaseURL == "" {
@@ -51,6 +63,10 @@ func Load() (*Config, error) {
 
 func (c *Config) IsDev() bool {
 	return c.Env != "production"
+}
+
+func (c *Config) IsTest() bool {
+	return c.Mode == "test" || c.Mode == "js"
 }
 
 func (c *Config) CallbackURL(provider string) string {

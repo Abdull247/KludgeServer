@@ -2,20 +2,37 @@ package auth
 
 import (
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/Abdull247/KludgeServer/internal/config"
+	"github.com/Abdull247/KludgeServer/internal/user"
 	"github.com/google/uuid"
 	"github.com/gorilla/securecookie"
 	"github.com/gorilla/sessions"
 	"github.com/markbates/goth/gothic"
 )
 
+var TestUserID = uuid.MustParse("00000000-0000-4000-8000-000000000001")
+
+func TestUser() *user.User {
+	now := time.Date(2026, 10, 1, 0, 0, 0, 0, time.UTC)
+	return &user.User{
+		ID:        TestUserID,
+		Email:     "ada@kludge.dev",
+		Name:      "Ada Lovelace",
+		AvatarURL: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=256&h=256&q=80",
+		CreatedAt: now,
+		UpdatedAt: now,
+	}
+}
+
 type SessionStore struct {
 	cookie   *securecookie.SecureCookie
 	name     string
 	secure   bool
 	sameSite http.SameSite
+	testMode bool
 }
 
 type sessionPayload struct {
@@ -45,6 +62,7 @@ func NewSessionStore(cfg *config.Config) *SessionStore {
 		name:     cfg.SessionCookie,
 		secure:   secure,
 		sameSite: sameSite,
+		testMode: cfg.IsTest(),
 	}
 }
 
@@ -67,16 +85,42 @@ func (s *SessionStore) Set(w http.ResponseWriter, userID uuid.UUID) error {
 }
 
 func (s *SessionStore) UserID(r *http.Request) (uuid.UUID, bool) {
+	if id, ok := s.fromBearer(r); ok {
+		return id, true
+	}
+
 	c, err := r.Cookie(s.name)
 	if err != nil {
 		return uuid.Nil, false
 	}
 
-	var payload sessionPayload
-	if err := s.cookie.Decode(s.name, c.Value, &payload); err != nil {
+	return s.decode(c.Value)
+}
+
+func (s *SessionStore) fromBearer(r *http.Request) (uuid.UUID, bool) {
+	h := r.Header.Get("Authorization")
+	if h == "" {
 		return uuid.Nil, false
 	}
+	typ, token, ok := strings.Cut(h, " ")
+	if !ok || !strings.EqualFold(typ, "Bearer") {
+		return uuid.Nil, false
+	}
+	token = strings.TrimSpace(token)
+	if token == "" {
+		return uuid.Nil, false
+	}
+	if s.testMode {
+		return TestUserID, true
+	}
+	return s.decode(token)
+}
 
+func (s *SessionStore) decode(value string) (uuid.UUID, bool) {
+	var payload sessionPayload
+	if err := s.cookie.Decode(s.name, value, &payload); err != nil {
+		return uuid.Nil, false
+	}
 	id, err := uuid.Parse(payload.UserID)
 	if err != nil {
 		return uuid.Nil, false

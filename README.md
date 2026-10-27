@@ -240,7 +240,53 @@ await fetch(`${api}/api/auth/logout`, {
 });
 ```
 
-`credentials: "include"` is required so the browser sends the httpOnly cookie. CORS is locked to `FRONTEND_URL`.
+`credentials: "include"` is required so the browser sends the httpOnly cookie. CORS is locked to `FRONTEND_URL` in production. Dev and `MODE=test` allow any origin.
+
+## Catalog API (`/api/v1`)
+
+Home and browse endpoints. Cookie session or `Authorization: Bearer <access-token>`. In `MODE=test` any bearer token authenticates as the mock user.
+
+Mock JSON lives in `internal/catalog/mocks/` (`viewer.json`, `sections.json`, `categories.json`, `items.json`). When `MODE=test` (or `MODE=js`) the API serves these files instead of Postgres.
+
+Trending ranks items by recency (exponential decay over ~10 days) plus saves, likes, forks, and pulls.
+
+### Home feed
+
+```text
+GET /api/v1/home
+Authorization: Bearer <access-token>
+```
+
+Query: `page`, `perPage`, `q`.
+
+Returns sections **Builds**, **Creators**, **APIs** (stable ids `sec_builds`, `sec_creators`, `sec_apis`), each with categories, a paginated feed, and a trending slice. Also returns rails: trending, just dropped, collections. Each item includes `buildArtwork`, `name`, `type`, `stats` (saves / likes / forks / pulls / runs), and a primary `metric` that depends on project type.
+
+### Section / category
+
+```text
+GET /api/v1/sections/{id}
+GET /api/v1/categories/{id}
+```
+
+`{id}` is the section/category id or slug. Query: `page`, `perPage`, `q`, `sort=trending|fresh`.
+
+### Rails and search
+
+```text
+GET /api/v1/trending
+GET /api/v1/dropped
+GET /api/v1/search?q=
+GET /api/v1/collections
+```
+
+### Save / like
+
+```text
+POST /api/v1/items/{id}/save
+POST /api/v1/items/{id}/like
+```
+
+Toggles the viewer flag and updates counts. Item detail and create-build endpoints are not in this pass.
 
 ## Environment
 
@@ -253,6 +299,7 @@ See `.env.example`. Important keys:
 | `FRONTEND_URL` | CORS origin and post-login redirect |
 | `DATABASE_URL` | Postgres URL (local now, Neon later) |
 | `SESSION_SECRET` | Signs cookies (32+ chars) |
+| `MODE` | `live` (default) or `test`. `test` serves catalog JSON from `internal/catalog/mocks` and skips Postgres |
 | `GITHUB_CLIENT_ID` / `GITHUB_CLIENT_SECRET` | GitHub OAuth |
 | `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` | Google OAuth |
 

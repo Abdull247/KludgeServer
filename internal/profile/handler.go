@@ -28,6 +28,11 @@ func (h *Handler) Me(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if h.profiles == nil {
+		respond.JSON(w, http.StatusOK, TestProfile())
+		return
+	}
+
 	p, err := h.profiles.GetByUserID(r.Context(), id)
 	if err != nil {
 		respond.Error(w, http.StatusInternalServerError, "could not load profile")
@@ -54,6 +59,14 @@ func (h *Handler) CompleteOnboarding(w http.ResponseWriter, r *http.Request) {
 	var body onboardingBody
 	if err := json.NewDecoder(r.Body).Decode(&body); err != nil || body.HasCodingBackground == nil {
 		respond.Error(w, http.StatusBadRequest, "hasCodingBackground is required")
+		return
+	}
+
+	if h.profiles == nil {
+		p := TestProfile()
+		p.HasCodingBackground = body.HasCodingBackground
+		p.OnboardingCompleted = true
+		respond.JSON(w, http.StatusOK, p)
 		return
 	}
 
