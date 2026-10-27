@@ -141,6 +141,7 @@ func (r catalogItemRow) toItem() Item {
 	if it.Tags == nil {
 		it.Tags = []string{}
 	}
+	enrichItem(&it)
 	return it
 }
 

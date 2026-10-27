@@ -51,6 +51,8 @@ func NewRouter(cfg *config.Config, authHandler *auth.Handler, profileHandler *pr
 				r.Get("/tags", catalogHandler.Tags)
 				r.Post("/items", catalogHandler.CreateItem)
 				r.Post("/items/record", catalogHandler.RecordItem)
+				r.Get("/items/{id}", catalogHandler.Item)
+				r.Get("/items/{id}/recommends", catalogHandler.Recommends)
 				r.Post("/items/{id}/save", catalogHandler.Save)
 				r.Post("/items/{id}/like", catalogHandler.Like)
 

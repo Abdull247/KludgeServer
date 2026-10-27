@@ -110,6 +110,103 @@ func TestTypesRoute(t *testing.T) {
 	}
 }
 
+func TestItemRoute(t *testing.T) {
+	h := testHandler(t, true)
+	r := chi.NewRouter()
+	r.Get("/api/v1/items/{id}", h.Item)
+	req := httptest.NewRequest(http.MethodGet, "/api/v1/items/itm_noclip", nil)
+	rec := httptest.NewRecorder()
+	r.ServeHTTP(rec, req)
+	if rec.Code != http.StatusOK {
+		t.Fatalf("status %d body %s", rec.Code, rec.Body.String())
+	}
+	var env struct {
+		Data Item `json:"data"`
+	}
+	if err := json.Unmarshal(rec.Body.Bytes(), &env); err != nil {
+		t.Fatal(err)
+	}
+	if env.Data.ID != "itm_noclip" || env.Data.Name != "Noclip" {
+		t.Fatalf("item: %+v", env.Data)
+	}
+	if env.Data.SizeDisplay == "" || env.Data.SizeBytes <= 0 {
+		t.Fatalf("size missing: %+v", env.Data)
+	}
+	if env.Data.TypeLabel != "Mod APK" {
+		t.Fatalf("typeLabel %q", env.Data.TypeLabel)
+	}
+	if env.Data.Downloads != env.Data.Stats.Pulls {
+		t.Fatalf("downloads %d pulls %d", env.Data.Downloads, env.Data.Stats.Pulls)
+	}
+	if env.Data.GalleryKind != GalleryScreenshots {
+		t.Fatalf("gallery %q", env.Data.GalleryKind)
+	}
+}
+
+func TestItemRouteBySlug(t *testing.T) {
+	h := testHandler(t, true)
+	r := chi.NewRouter()
+	r.Get("/api/v1/items/{id}", h.Item)
+	req := httptest.NewRequest(http.MethodGet, "/api/v1/items/orbit-ui-kit", nil)
+	rec := httptest.NewRecorder()
+	r.ServeHTTP(rec, req)
+	if rec.Code != http.StatusOK {
+		t.Fatalf("status %d body %s", rec.Code, rec.Body.String())
+	}
+}
+
+func TestItemNotFound(t *testing.T) {
+	h := testHandler(t, true)
+	req := httptest.NewRequest(http.MethodGet, "/api/v1/items/missing", nil)
+	req = req.WithContext(req.Context())
+	r := chi.NewRouter()
+	r.Get("/api/v1/items/{id}", h.Item)
+	rec := httptest.NewRecorder()
+	r.ServeHTTP(rec, req)
+	if rec.Code != http.StatusNotFound {
+		t.Fatalf("status %d", rec.Code)
+	}
+}
+
+func TestRecommendsRoute(t *testing.T) {
+	h := testHandler(t, true)
+	r := chi.NewRouter()
+	r.Get("/api/v1/items/{id}/recommends", h.Recommends)
+	req := httptest.NewRequest(http.MethodGet, "/api/v1/items/itm_noclip/recommends", nil)
+	rec := httptest.NewRecorder()
+	r.ServeHTTP(rec, req)
+	if rec.Code != http.StatusOK {
+		t.Fatalf("status %d body %s", rec.Code, rec.Body.String())
+	}
+	var env struct {
+		Data RecommendResult `json:"data"`
+	}
+	if err := json.Unmarshal(rec.Body.Bytes(), &env); err != nil {
+		t.Fatal(err)
+	}
+	if env.Data.SeedID != "itm_noclip" {
+		t.Fatalf("seed %s", env.Data.SeedID)
+	}
+	if len(env.Data.Items) == 0 {
+		t.Fatal("expected related items")
+	}
+	for _, it := range env.Data.Items {
+		if it.ID == "itm_noclip" {
+			t.Fatal("seed leaked into recommends")
+		}
+	}
+}
+
+func TestItemUnauthorized(t *testing.T) {
+	h := testHandler(t, false)
+	req := httptest.NewRequest(http.MethodGet, "/api/v1/items/itm_orbit", nil)
+	rec := httptest.NewRecorder()
+	h.Item(rec, req)
+	if rec.Code != http.StatusUnauthorized {
+		t.Fatalf("status %d", rec.Code)
+	}
+}
+
 func TestTagsRoute(t *testing.T) {
 	h := testHandler(t, false)
 	r := chi.NewRouter()

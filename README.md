@@ -307,6 +307,8 @@ The minted value is also a valid session cookie value, so it can be pasted back 
 | `GET` | `/api/v1/dropped` | session | Newest-first rail (builds section) |
 | `GET` | `/api/v1/collections` | session | Collection rail |
 | `GET` | `/api/v1/search?q=` | session | Cross-catalog search |
+| `GET` | `/api/v1/items/{id}` | session | Item details (id or slug) with size, downloads, gallery |
+| `GET` | `/api/v1/items/{id}/recommends` | session | Related items for the current id |
 | `POST` | `/api/v1/items` | session | Publish a new item as the signed-in user |
 | `POST` | `/api/v1/items/record` | automation | Ingest a new item as the automation account |
 | `POST` | `/api/v1/items/{id}/save` | session | Toggle save for the viewer |
@@ -413,6 +415,57 @@ curl "http://localhost:8080/api/v1/search?q=jailbreak" \
 
 curl "http://localhost:8080/api/v1/collections" \
   -H "Authorization: Bearer <access-token>"
+```
+
+### Item details
+
+`{id}` is the item id or slug. The payload is the full catalog item plus fields the details page needs: `sizeBytes`, `sizeDisplay`, `downloads`, `typeLabel`, `version`, `galleryKind`, and `banners`.
+
+```bash
+curl http://localhost:8080/api/v1/items/itm_noclip \
+  -H "Authorization: Bearer <access-token>"
+
+curl http://localhost:8080/api/v1/items/noclip-apk \
+  -H "Authorization: Bearer <access-token>"
+```
+
+```json
+{
+  "data": {
+    "id": "itm_noclip",
+    "slug": "noclip-apk",
+    "name": "Noclip",
+    "type": "modded_apk",
+    "typeLabel": "Mod APK",
+    "kind": "build",
+    "version": "9.0.2",
+    "sizeBytes": 30408704,
+    "sizeDisplay": "29.0 MB",
+    "downloads": 2100,
+    "galleryKind": "screenshots",
+    "banners": ["https://..."],
+    "description": "...",
+    "publisher": { "username": "amaka", "displayName": "Amaka Ibe" }
+  }
+}
+```
+
+### Recommends
+
+Related items for the current id, ranked by type, category, and shared tags. The seed item is never returned.
+
+```bash
+curl http://localhost:8080/api/v1/items/itm_noclip/recommends \
+  -H "Authorization: Bearer <access-token>"
+```
+
+```json
+{
+  "data": {
+    "seedId": "itm_noclip",
+    "items": [ { "id": "itm_weekend_apks", "name": "Weekend APKs" } ]
+  }
+}
 ```
 
 ### Save / like

@@ -67,6 +67,10 @@ type Item struct {
 	Blurb         string      `json:"blurb"`
 	Description   string      `json:"description"`
 	Version       string      `json:"version,omitempty"`
+	SizeBytes     int64       `json:"sizeBytes,omitempty"`
+	SizeDisplay   string      `json:"sizeDisplay,omitempty"`
+	Downloads     int         `json:"downloads"`
+	TypeLabel     string      `json:"typeLabel,omitempty"`
 	BuildArtwork  string      `json:"buildArtwork"`
 	Banners       []string    `json:"banners,omitempty"`
 	GalleryKind   string      `json:"galleryKind"`

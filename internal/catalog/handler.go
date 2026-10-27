@@ -137,6 +137,30 @@ func (h *Handler) Search(w http.ResponseWriter, r *http.Request) {
 	respond.JSON(w, http.StatusOK, h.store.Search(queryFrom(r)))
 }
 
+func (h *Handler) Item(w http.ResponseWriter, r *http.Request) {
+	if !h.requireUser(w, r) {
+		return
+	}
+	it, ok := h.store.Get(chi.URLParam(r, "id"))
+	if !ok {
+		respond.Error(w, http.StatusNotFound, "item not found")
+		return
+	}
+	respond.JSON(w, http.StatusOK, it)
+}
+
+func (h *Handler) Recommends(w http.ResponseWriter, r *http.Request) {
+	if !h.requireUser(w, r) {
+		return
+	}
+	res, ok := h.store.Recommends(chi.URLParam(r, "id"), 8)
+	if !ok {
+		respond.Error(w, http.StatusNotFound, "item not found")
+		return
+	}
+	respond.JSON(w, http.StatusOK, res)
+}
+
 func (h *Handler) Save(w http.ResponseWriter, r *http.Request) {
 	h.toggle(w, r, "save")
 }

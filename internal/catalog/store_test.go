@@ -54,6 +54,45 @@ func TestCategoryByID(t *testing.T) {
 	}
 }
 
+func TestGetItemEnriched(t *testing.T) {
+	s := testStore(t)
+	it, ok := s.Get("itm_noclip")
+	if !ok {
+		t.Fatal("missing item")
+	}
+	if it.SizeBytes <= 0 || it.SizeDisplay == "" {
+		t.Fatalf("size: %+v", it)
+	}
+	if it.Downloads != it.Stats.Pulls {
+		t.Fatalf("downloads %d", it.Downloads)
+	}
+	if it.TypeLabel != "Mod APK" {
+		t.Fatalf("label %q", it.TypeLabel)
+	}
+	if it.Version == "" {
+		t.Fatal("expected version")
+	}
+}
+
+func TestRecommendsRelated(t *testing.T) {
+	s := testStore(t)
+	res, ok := s.Recommends("itm_frida", 6)
+	if !ok {
+		t.Fatal("missing item")
+	}
+	if len(res.Items) == 0 {
+		t.Fatal("expected related")
+	}
+	if res.Items[0].Type != "frida" && res.Items[0].CategoryID != "cat_frida" {
+		t.Fatalf("expected related first, got %+v", res.Items[0])
+	}
+	for _, it := range res.Items {
+		if it.ID == "itm_frida" {
+			t.Fatal("seed in recommends")
+		}
+	}
+}
+
 func TestToggleSave(t *testing.T) {
 	s := testStore(t)
 	before, ok := s.Toggle("itm_orbit", "save")

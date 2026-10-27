@@ -207,6 +207,7 @@ func (s *Store) Create(ctx context.Context, in CreateInput, pub Publisher) (Item
 		UpdatedAt:    now,
 	}
 	it.Metric = metricFor(it)
+	enrichItem(&it)
 
 	if s.db != nil {
 		var pid *uuid.UUID

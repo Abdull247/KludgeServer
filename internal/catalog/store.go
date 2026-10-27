@@ -136,12 +136,7 @@ func (s *Store) hydrate() {
 			it.Description = it.Blurb
 		}
 		it.Metric = metricFor(*it)
-		if it.Tags == nil {
-			it.Tags = []string{}
-		}
-		if it.GalleryKind == "" {
-			it.GalleryKind = GalleryKindFor(it.Type)
-		}
+		enrichItem(it)
 		counts[it.CategoryID]++
 		secCounts[it.SectionID]++
 	}
@@ -309,6 +304,7 @@ func (s *Store) Toggle(id, action string) (ToggleResult, bool) {
 		return ToggleResult{}, false
 	}
 	it.Metric = metricFor(it)
+	enrichItem(&it)
 	s.items[idx] = it
 	return ToggleResult{ID: it.ID, Viewer: it.Viewer, Stats: it.Stats, Metric: it.Metric}, true
 }
@@ -398,9 +394,7 @@ func decorate(items []Item, now time.Time) []Item {
 	for i := range out {
 		out[i].TrendingScore = trendingScore(out[i], now)
 		out[i].Metric = metricFor(out[i])
-		if out[i].Tags == nil {
-			out[i].Tags = []string{}
-		}
+		enrichItem(&out[i])
 	}
 	return out
 }

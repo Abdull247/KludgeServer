@@ -8,7 +8,14 @@
     "mark": "O",
     "tone": "a",
     "blurb": "A dense Figma kit for dark product UIs — 180 components, auto-layout, and a token file that actually matches production.",
+    "description": "Orbit is a dense Figma kit for dark product UIs. One hundred and eighty components, auto-layout, and a token file that actually matches production. Ship screens without restyling every frame.",
+    "version": "2.4.0",
     "buildArtwork": "https://images.unsplash.com/photo-1558658149-361eeae03583?auto=format&fit=crop&w=1200&h=720&q=80",
+    "banners": [
+      "https://images.unsplash.com/photo-1558658149-361eeae03583?auto=format&fit=crop&w=1400&h=800&q=80",
+      "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=1400&h=800&q=80",
+      "https://images.unsplash.com/photo-1558658149-51c1dd03c9e7?auto=format&fit=crop&w=1400&h=800&q=80"
+    ],
     "categoryId": "cat_ui_kit",
     "sectionId": "sec_builds",
     "stats": { "saves": 980, "likes": 412, "forks": 64, "pulls": 0, "runs": 0, "followers": 0, "builds": 0 },
@@ -31,7 +38,13 @@
     "mark": "F",
     "tone": "b",
     "blurb": "A pocket of ready Frida scripts for SSL pinning, root hide, and receipt validation. Copy, attach, ship.",
+    "description": "A pocket of ready Frida scripts for SSL pinning, root hide, and receipt validation. Copy, attach, ship. Each hook is annotated and tested against current Play builds.",
+    "version": "0.9.2",
     "buildArtwork": "https://images.unsplash.com/photo-1550751827-4bd374c3f58b?auto=format&fit=crop&w=1200&h=720&q=80",
+    "banners": [
+      "https://images.unsplash.com/photo-1550751827-4bd374c3f58b?auto=format&fit=crop&w=1400&h=800&q=80",
+      "https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=1400&h=800&q=80"
+    ],
     "categoryId": "cat_frida",
     "sectionId": "sec_builds",
     "stats": { "saves": 318, "likes": 190, "forks": 412, "pulls": 88, "runs": 0, "followers": 0, "builds": 0 },
@@ -54,7 +67,15 @@
     "mark": "N",
     "tone": "c",
     "blurb": "Unlocked builds of popular Android apps — ads stripped, premium flags flipped, hashes posted with every drop.",
-    "buildArtwork": "https://images.unsplash.com/photo-1512941937669-90a1b58e7e9c?auto=format&fit=crop&w=1200&h=720&q=80",
+    "description": "Unlocked builds of popular Android apps — ads stripped, premium flags flipped, hashes posted with every drop. Dual-pane browsing, multi-select, copy/cut/paste with conflict handling, search, recents, bookmarks.",
+    "version": "9.0.2",
+    "buildArtwork": "https://images.unsplash.com/photo-1512941937669-90a1b58e7e9c?auto=format&fit=crop&w=720&h=720&q=80",
+    "banners": [
+      "https://images.unsplash.com/photo-1512941937669-90a1b58e7e9c?auto=format&fit=crop&w=720&h=1280&q=80",
+      "https://images.unsplash.com/photo-1551650975-87deedd944c3?auto=format&fit=crop&w=720&h=1280&q=80",
+      "https://images.unsplash.com/photo-1607252650355-f7fd0460ccdb?auto=format&fit=crop&w=720&h=1280&q=80",
+      "https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?auto=format&fit=crop&w=720&h=1280&q=80"
+    ],
     "categoryId": "cat_modded_apk",
     "sectionId": "sec_builds",
     "stats": { "saves": 640, "likes": 501, "forks": 22, "pulls": 2100, "runs": 0, "followers": 0, "builds": 0 },
@@ -77,7 +98,13 @@
     "mark": "V",
     "tone": "d",
     "blurb": "A jailbreak lab of system prompts that keep agents useful when the usual refusals kick in. Local transcripts only.",
+    "description": "A jailbreak lab of system prompts that keep agents useful when the usual refusals kick in. Local transcripts only. Each prompt is versioned and tagged by model family.",
+    "version": "1.6.0",
     "buildArtwork": "https://images.unsplash.com/photo-1677442136019-21780ecad995?auto=format&fit=crop&w=1200&h=720&q=80",
+    "banners": [
+      "https://images.unsplash.com/photo-1677442136019-21780ecad995?auto=format&fit=crop&w=1400&h=800&q=80",
+      "https://images.unsplash.com/photo-1620712943543-bcc4688e7485?auto=format&fit=crop&w=1400&h=800&q=80"
+    ],
     "categoryId": "cat_prompt",
     "sectionId": "sec_builds",
     "stats": { "saves": 640, "likes": 277, "forks": 91, "pulls": 0, "runs": 0, "followers": 0, "builds": 0 },
@@ -115,7 +142,13 @@
     "mark": "D",
     "tone": "d",
     "blurb": "A14-based, de-Googled, with per-app proxy and a silent update channel. Signed nightlies, SHA-256 on file.",
+    "description": "A14-based, de-Googled, with per-app proxy and a silent update channel. Signed nightlies, SHA-256 on file. Per-app SOCKS, no Google services, quiet OTA.",
+    "version": "14.2.1",
     "buildArtwork": "https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?auto=format&fit=crop&w=1200&h=720&q=80",
+    "banners": [
+      "https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?auto=format&fit=crop&w=1400&h=800&q=80",
+      "https://images.unsplash.com/photo-1510557880182-3d4d3cba35a5?auto=format&fit=crop&w=1400&h=800&q=80"
+    ],
     "categoryId": "cat_custom_rom",
     "sectionId": "sec_builds",
     "stats": { "saves": 410, "likes": 201, "forks": 33, "pulls": 880, "runs": 0, "followers": 0, "builds": 0 },
