@@ -212,6 +212,7 @@ func identityPublisher(iden Identity, kind string) Publisher {
 		DisplayName: iden.FullName,
 		AvatarURL:   iden.AvatarURL,
 		Kind:        kind,
+		Verified:    kind == PublisherKindAutomation,
 	}
 }
 
