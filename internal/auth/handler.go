@@ -51,6 +51,18 @@ func (h *Handler) Begin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Carry the post-login target through the provider round-trip so the
+	// redirect lands back on the origin that started the login (proxy-safe).
+	if next := r.URL.Query().Get("next"); strings.HasPrefix(next, "/") {
+		if sess, err := gothic.Store.Get(r, gothic.SessionName); err == nil {
+			sess.Values["kludge_next"] = next
+			if err := sess.Save(r, w); err != nil {
+				h.redirectAuthError(w, r, "could not start sign-in")
+				return
+			}
+		}
+	}
+
 	gothic.BeginAuthHandler(w, r)
 }
 
@@ -101,11 +113,25 @@ func (h *Handler) Callback(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	next := h.cfg.FrontendURL + "/home?welcome=1"
-	if p != nil && !p.OnboardingCompleted {
-		next = h.cfg.FrontendURL + "/onboarding?welcome=1"
-	}
+	next := h.loginNext(r, p)
 	http.Redirect(w, r, next, http.StatusFound)
+}
+
+// loginNext resolves the post-login redirect: the stashed relative target
+// from the login origin when present, otherwise the configured frontend URL.
+func (h *Handler) loginNext(r *http.Request, p *profile.Profile) string {
+	if sess, err := gothic.Store.Get(r, gothic.SessionName); err == nil {
+		if v, ok := sess.Values["kludge_next"].(string); ok && strings.HasPrefix(v, "/") {
+			if !strings.Contains(v, "?") {
+				v += "?welcome=1"
+			}
+			return v
+		}
+	}
+	if p != nil && !p.OnboardingCompleted {
+		return h.cfg.FrontendURL + "/onboarding?welcome=1"
+	}
+	return h.cfg.FrontendURL + "/home?welcome=1"
 }
 
 func (h *Handler) Me(w http.ResponseWriter, r *http.Request) {
