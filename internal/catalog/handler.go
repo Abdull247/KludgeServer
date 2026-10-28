@@ -164,9 +164,6 @@ func (h *Handler) Search(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) Item(w http.ResponseWriter, r *http.Request) {
-	if !h.requireUser(w, r) {
-		return
-	}
 	userID, admin := h.viewer(r)
 	it, ok := h.store.GetFor(chi.URLParam(r, "id"), userID, admin)
 	if !ok {
@@ -177,9 +174,6 @@ func (h *Handler) Item(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) Recommends(w http.ResponseWriter, r *http.Request) {
-	if !h.requireUser(w, r) {
-		return
-	}
 	userID, admin := h.viewer(r)
 	if _, ok := h.store.GetFor(chi.URLParam(r, "id"), userID, admin); !ok {
 		respond.Error(w, http.StatusNotFound, "item not found")

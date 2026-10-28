@@ -197,13 +197,15 @@ func TestRecommendsRoute(t *testing.T) {
 	}
 }
 
-func TestItemUnauthorized(t *testing.T) {
+func TestItemGuestCanView(t *testing.T) {
 	h := testHandler(t, false)
-	req := httptest.NewRequest(http.MethodGet, "/api/v1/items/itm_orbit", nil)
+	r := chi.NewRouter()
+	r.Get("/api/v1/items/{id}", h.Item)
+	req := httptest.NewRequest(http.MethodGet, "/api/v1/items/itm_noclip", nil)
 	rec := httptest.NewRecorder()
-	h.Item(rec, req)
-	if rec.Code != http.StatusUnauthorized {
-		t.Fatalf("status %d", rec.Code)
+	r.ServeHTTP(rec, req)
+	if rec.Code != http.StatusOK {
+		t.Fatalf("status %d body %s", rec.Code, rec.Body.String())
 	}
 }
 
