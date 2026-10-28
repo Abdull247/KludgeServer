@@ -39,7 +39,7 @@ func Load() (*Config, error) {
 		Mode:               strings.ToLower(get("MODE", "live")),
 		Port:               get("APP_PORT", "8080"),
 		PublicURL:          strings.TrimRight(get("APP_PUBLIC_URL", "http://localhost:8080"), "/"),
-		FrontendURL:        strings.TrimRight(get("FRONTEND_URL", "http://localhost:3000"), "/"),
+		FrontendURL:        strings.TrimRight(get("FRONTEND_URL", "https://kludgekit.web.app"), "/"),
 		DatabaseURL:        os.Getenv("DATABASE_URL"),
 		SessionSecret:      os.Getenv("SESSION_SECRET"),
 		SessionCookie:      get("SESSION_COOKIE", "kludge_session"),

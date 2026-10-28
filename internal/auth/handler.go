@@ -53,7 +53,7 @@ func (h *Handler) Begin(w http.ResponseWriter, r *http.Request) {
 
 	// Carry the post-login target through the provider round-trip so the
 	// redirect lands back on the origin that started the login (proxy-safe).
-	if next := r.URL.Query().Get("next"); strings.HasPrefix(next, "/") {
+	if next := r.URL.Query().Get("next"); h.safeNext(next) {
 		if sess, err := gothic.Store.Get(r, gothic.SessionName); err == nil {
 			sess.Values["kludge_next"] = next
 			if err := sess.Save(r, w); err != nil {
@@ -113,25 +113,68 @@ func (h *Handler) Callback(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	token, err := h.sessions.Token(u.ID)
+	if err != nil {
+		h.redirectAuthError(w, r, "could not create your session")
+		return
+	}
+
 	next := h.loginNext(r, p)
-	http.Redirect(w, r, next, http.StatusFound)
+	http.Redirect(w, r, appendQuery(next, url.Values{
+		"welcome": {"1"},
+		"session": {token},
+	}), http.StatusFound)
 }
 
-// loginNext resolves the post-login redirect: the stashed relative target
-// from the login origin when present, otherwise the configured frontend URL.
+// loginNext resolves the post-login redirect: the stashed target from the
+// login origin when present, otherwise the configured frontend URL.
 func (h *Handler) loginNext(r *http.Request, p *profile.Profile) string {
+	target := h.cfg.FrontendURL + "/home"
+	if p != nil && !p.OnboardingCompleted {
+		target = h.cfg.FrontendURL + "/onboarding"
+	}
 	if sess, err := gothic.Store.Get(r, gothic.SessionName); err == nil {
-		if v, ok := sess.Values["kludge_next"].(string); ok && strings.HasPrefix(v, "/") {
-			if !strings.Contains(v, "?") {
-				v += "?welcome=1"
-			}
-			return v
+		if v, ok := sess.Values["kludge_next"].(string); ok && h.safeNext(v) {
+			target = v
 		}
 	}
-	if p != nil && !p.OnboardingCompleted {
-		return h.cfg.FrontendURL + "/onboarding?welcome=1"
+	return target
+}
+
+func (h *Handler) safeNext(next string) bool {
+	if next == "" || strings.HasPrefix(next, "//") {
+		return false
 	}
-	return h.cfg.FrontendURL + "/home?welcome=1"
+	if strings.HasPrefix(next, "/") {
+		return true
+	}
+	u, err := url.Parse(next)
+	if err != nil || u.Host == "" {
+		return false
+	}
+	if u.Scheme != "http" && u.Scheme != "https" {
+		return false
+	}
+	host := strings.ToLower(u.Host)
+	if front, err := url.Parse(h.cfg.FrontendURL); err == nil && strings.EqualFold(host, front.Host) {
+		return true
+	}
+	return host == "kludgekit.web.app" || host == "kludgekit.firebaseapp.com"
+}
+
+func appendQuery(raw string, extra url.Values) string {
+	u, err := url.Parse(raw)
+	if err != nil {
+		return raw
+	}
+	q := u.Query()
+	for k, vs := range extra {
+		for _, v := range vs {
+			q.Set(k, v)
+		}
+	}
+	u.RawQuery = q.Encode()
+	return u.String()
 }
 
 func (h *Handler) Me(w http.ResponseWriter, r *http.Request) {
