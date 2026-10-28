@@ -8,12 +8,13 @@ import (
 	"github.com/Abdull247/KludgeServer/internal/catalog"
 	"github.com/Abdull247/KludgeServer/internal/config"
 	"github.com/Abdull247/KludgeServer/internal/profile"
+	"github.com/Abdull247/KludgeServer/internal/share"
 	"github.com/Abdull247/KludgeServer/internal/upload"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 )
 
-func NewRouter(cfg *config.Config, authHandler *auth.Handler, profileHandler *profile.Handler, catalogHandler *catalog.Handler, adminHandler *admin.Handler, uploadHandler *upload.Handler) http.Handler {
+func NewRouter(cfg *config.Config, authHandler *auth.Handler, profileHandler *profile.Handler, catalogHandler *catalog.Handler, adminHandler *admin.Handler, uploadHandler *upload.Handler, shareHandler *share.Handler) http.Handler {
 	r := chi.NewRouter()
 
 	r.Use(middleware.RequestID)
@@ -25,6 +26,10 @@ func NewRouter(cfg *config.Config, authHandler *auth.Handler, profileHandler *pr
 	r.Get("/health", func(w http.ResponseWriter, r *http.Request) {
 		JSON(w, http.StatusOK, map[string]string{"status": "ok"})
 	})
+
+	if shareHandler != nil {
+		r.Get("/i/{id}", shareHandler.Item)
+	}
 
 	r.Route("/api", func(r chi.Router) {
 		r.Route("/auth", func(r chi.Router) {

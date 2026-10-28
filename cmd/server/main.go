@@ -16,6 +16,7 @@ import (
 	"github.com/Abdull247/KludgeServer/internal/database"
 	httpx "github.com/Abdull247/KludgeServer/internal/http"
 	"github.com/Abdull247/KludgeServer/internal/profile"
+	"github.com/Abdull247/KludgeServer/internal/share"
 	"github.com/Abdull247/KludgeServer/internal/storage"
 	"github.com/Abdull247/KludgeServer/internal/upload"
 	"github.com/Abdull247/KludgeServer/internal/user"
@@ -85,10 +86,11 @@ func serve(cfg *config.Config, authHandler *auth.Handler, profileHandler *profil
 	catHandler := catalog.NewHandler(catStore, sessions, identities, cfg.AutomationEmail, cfg.AdminEmails)
 	adminHandler := admin.NewHandler(catStore, pool, sessions, identities, cfg.AdminEmails)
 	uploadHandler := upload.NewHandler(sessions, storage.New(cfg), cfg)
+	shareHandler := share.NewHandler(cfg, catStore)
 
 	srv := &http.Server{
 		Addr:              ":" + cfg.Port,
-		Handler:           httpx.NewRouter(cfg, authHandler, profileHandler, catHandler, adminHandler, uploadHandler),
+		Handler:           httpx.NewRouter(cfg, authHandler, profileHandler, catHandler, adminHandler, uploadHandler, shareHandler),
 		ReadHeaderTimeout: 10 * time.Second,
 		ReadTimeout:       2 * time.Minute,
 		WriteTimeout:      2 * time.Minute,
