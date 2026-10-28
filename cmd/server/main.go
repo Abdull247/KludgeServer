@@ -20,6 +20,7 @@ import (
 	"github.com/Abdull247/KludgeServer/internal/storage"
 	"github.com/Abdull247/KludgeServer/internal/upload"
 	"github.com/Abdull247/KludgeServer/internal/user"
+	"github.com/Abdull247/KludgeServer/internal/visits"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
@@ -87,10 +88,11 @@ func serve(cfg *config.Config, authHandler *auth.Handler, profileHandler *profil
 	adminHandler := admin.NewHandler(catStore, pool, sessions, identities, cfg.AdminEmails)
 	uploadHandler := upload.NewHandler(sessions, storage.New(cfg), cfg)
 	shareHandler := share.NewHandler(cfg, catStore)
+	visitsHandler := visits.NewHandler(visits.NewStore(pool), sessions, identities, cfg.AdminEmails, catStore)
 
 	srv := &http.Server{
 		Addr:              ":" + cfg.Port,
-		Handler:           httpx.NewRouter(cfg, authHandler, profileHandler, catHandler, adminHandler, uploadHandler, shareHandler),
+		Handler:           httpx.NewRouter(cfg, authHandler, profileHandler, catHandler, adminHandler, uploadHandler, shareHandler, visitsHandler),
 		ReadHeaderTimeout: 10 * time.Second,
 		ReadTimeout:       2 * time.Minute,
 		WriteTimeout:      2 * time.Minute,

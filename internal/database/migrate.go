@@ -91,4 +91,25 @@ CREATE INDEX IF NOT EXISTS catalog_items_category_idx ON catalog_items (category
 CREATE INDEX IF NOT EXISTS catalog_items_section_idx ON catalog_items (section_id);
 CREATE INDEX IF NOT EXISTS catalog_items_published_idx ON catalog_items (published_at DESC);
 CREATE INDEX IF NOT EXISTS catalog_items_verification_idx ON catalog_items (verification_status);
+
+CREATE TABLE IF NOT EXISTS item_visits (
+    id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    item_id       TEXT NOT NULL,
+    item_name     TEXT NOT NULL DEFAULT '',
+    authenticated BOOLEAN NOT NULL DEFAULT false,
+    user_id       UUID REFERENCES users(id) ON DELETE SET NULL,
+    name          TEXT NOT NULL DEFAULT '',
+    email         TEXT NOT NULL DEFAULT '',
+    username      TEXT NOT NULL DEFAULT '',
+    avatar_url    TEXT NOT NULL DEFAULT '',
+    user_agent    TEXT NOT NULL DEFAULT '',
+    ip_address    TEXT NOT NULL DEFAULT '',
+    referer       TEXT NOT NULL DEFAULT '',
+    language      TEXT NOT NULL DEFAULT '',
+    created_at    TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS item_visits_created_idx ON item_visits (created_at DESC);
+CREATE INDEX IF NOT EXISTS item_visits_item_idx ON item_visits (item_id);
+CREATE INDEX IF NOT EXISTS item_visits_user_idx ON item_visits (user_id);
 `
