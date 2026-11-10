@@ -36,7 +36,8 @@ func main() {
 
 	if cfg.IsTest() {
 		log.Printf("MODE=test — serving catalog from mock JSON, skipping database")
-		serve(cfg, auth.NewHandler(cfg, nil, nil, sessions), profile.NewHandler(nil, sessions), sessions, nil, nil)
+		handoffs := auth.NewHandoffStore(nil, cfg.OAuthTxnTTL, cfg.OAuthHandoffTTL)
+		serve(cfg, auth.NewHandler(cfg, nil, nil, sessions, handoffs), profile.NewHandler(nil, sessions), sessions, nil, nil)
 		return
 	}
 
@@ -53,6 +54,7 @@ func main() {
 
 	users := user.NewStore(pool)
 	profiles := profile.NewStore(pool)
+	handoffs := auth.NewHandoffStore(pool, cfg.OAuthTxnTTL, cfg.OAuthHandoffTTL)
 
 	if cfg.AutomationEmail != "" {
 		if err := ensureAutomationAccount(ctx, users, profiles, cfg.AutomationEmail); err != nil {
@@ -60,7 +62,7 @@ func main() {
 		}
 	}
 
-	serve(cfg, auth.NewHandler(cfg, users, profiles, sessions), profile.NewHandler(profiles, sessions), sessions, pool, profiles)
+	serve(cfg, auth.NewHandler(cfg, users, profiles, sessions, handoffs), profile.NewHandler(profiles, sessions), sessions, pool, profiles)
 }
 
 func serve(cfg *config.Config, authHandler *auth.Handler, profileHandler *profile.Handler, sessions *auth.SessionStore, pool *pgxpool.Pool, profiles *profile.Store) {

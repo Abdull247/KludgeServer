@@ -36,6 +36,9 @@ func NewRouter(cfg *config.Config, authHandler *auth.Handler, profileHandler *pr
 		r.Route("/auth", func(r chi.Router) {
 			r.Get("/me", authHandler.Me)
 			r.Post("/logout", authHandler.Logout)
+			r.Get("/complete", authHandler.Complete)
+			r.Post("/oauth/exchange", authHandler.Exchange)
+			r.Post("/oauth/{provider}", authHandler.StartOAuth)
 			r.Get("/{provider}", authHandler.Begin)
 			r.Get("/{provider}/callback", authHandler.Callback)
 		})

@@ -41,6 +41,12 @@ func TestLoadOK(t *testing.T) {
 	if cfg.Port != "9090" {
 		t.Fatalf("port: got %q", cfg.Port)
 	}
+	if cfg.AppLink != "kludge://auth/complete" {
+		t.Fatalf("app link: got %q", cfg.AppLink)
+	}
+	if cfg.OAuthTxnTTL != 300 || cfg.OAuthHandoffTTL != 60 {
+		t.Fatalf("ttl: txn=%d handoff=%d", cfg.OAuthTxnTTL, cfg.OAuthHandoffTTL)
+	}
 }
 
 func TestLoadTestModeSkipsSecrets(t *testing.T) {

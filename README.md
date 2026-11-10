@@ -25,7 +25,7 @@ internal/
   config/              load .env and validate required values
   database/            Postgres pool + schema migrate on boot
   http/                chi router, CORS, request logger
-  auth/                Google + GitHub OAuth + session cookie
+  auth/                Google + GitHub OAuth, session cookie, app ticket handoff
   user/                users + oauth_accounts persistence
   respond/             JSON { data } / { error } helpers
 .env.example           committed template
@@ -65,6 +65,8 @@ Schema is applied automatically on server start (`internal/database/migrate.go`)
 - `oauth_accounts` - GitHub / Google identities linked to a user
 - `profiles` - public profile for each user (username, bio, onboarding)
 - `catalog_items` - created/recorded catalog items (mock items are only in memory)
+- `oauth_transactions` - in-flight app OAuth state (hashed)
+- `oauth_handoffs` - one-time app sign-in tickets (hashed)
 
 If the same email signs in with both providers, both accounts attach to the same user.
 
@@ -104,12 +106,20 @@ Expected: `{"data":{"status":"ok"}}`
 
 This is the Go equivalent of better-auth social providers.
 
-Flow:
+Web flow:
 
 1. Browser hits `GET /api/auth/github` or `GET /api/auth/google`
 2. Server redirects to the provider
 3. Provider redirects back to `/api/auth/{provider}/callback`
 4. Server upserts the user and profile, sets an httpOnly session cookie, then redirects to `/onboarding` (first login) or `/home`
+
+App flow (ticket handoff, same Google/GitHub callbacks):
+
+1. App starts login with `X-Kludge-Client: app` (or `?client=app`, or `POST /api/auth/oauth/{provider}`)
+2. Server redirects the browser to the provider without a web session cookie
+3. Provider redirects back to the same `/api/auth/{provider}/callback`
+4. Server issues a one-time ticket and serves an HTML page that deep-links into the app
+5. App calls `POST /api/auth/oauth/exchange` with `{ "ticket": "..." }` and receives a bearer session token
 
 ### GitHub
 
@@ -141,6 +151,17 @@ GET /api/auth/google
 
 Redirects the browser to the provider. Use these as the `href` on your frontend login buttons.
 
+Pass `X-Kludge-Client: app` (or `?client=app`) to start the native ticket flow instead of the web cookie flow.
+
+### Start app login (JSON)
+
+```text
+POST /api/auth/oauth/github
+POST /api/auth/oauth/google
+```
+
+Returns `{ "data": { "authorizationUrl": "...", "expiresIn": 300 } }`. Open `authorizationUrl` in a browser / Custom Tab.
+
 ### OAuth callback
 
 ```text
@@ -149,6 +170,36 @@ GET /api/auth/google/callback
 ```
 
 Provider-only. Do not call this yourself.
+
+Web clients are redirected to the frontend with `?session=...`. App clients receive an HTML handoff page that opens `kludge://auth/complete?ticket=...`.
+
+### Exchange ticket (app)
+
+```text
+POST /api/auth/oauth/exchange
+```
+
+Body: `{ "ticket": "..." }`. Tickets are single-use and expire quickly (default 60s).
+
+```json
+{
+  "data": {
+    "user": { "id": "uuid", "email": "you@example.com", "name": "You", "avatarUrl": "https://..." },
+    "session": "signed-session-token",
+    "tokenType": "Bearer"
+  }
+}
+```
+
+Send `Authorization: Bearer <session>` on later API calls.
+
+### App complete page
+
+```text
+GET /api/auth/complete?ticket=...
+```
+
+HTML page that deep-links into the Android app. Useful as an HTTPS fallback for `KLUDGE_APP_LINK`.
 
 ### Current user
 

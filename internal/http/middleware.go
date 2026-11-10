@@ -13,7 +13,7 @@ func CORS(cfg *config.Config) func(http.Handler) http.Handler {
 	opts := cors.Options{
 		AllowedOrigins:   []string{cfg.FrontendURL},
 		AllowedMethods:   []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
-		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type"},
+		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "X-Kludge-Client", "X-Client"},
 		AllowCredentials: true,
 		MaxAge:           300,
 	}

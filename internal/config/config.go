@@ -29,6 +29,10 @@ type Config struct {
 	R2Endpoint         string
 	R2PublicURL        string
 	MaxUploadBytes     int64
+	AppLink            string
+	AppPackage         string
+	OAuthTxnTTL        int
+	OAuthHandoffTTL    int
 }
 
 func Load() (*Config, error) {
@@ -55,6 +59,10 @@ func Load() (*Config, error) {
 		R2Endpoint:         strings.TrimRight(os.Getenv("R2_ENDPOINT"), "/"),
 		R2PublicURL:        strings.TrimRight(os.Getenv("R2_PUBLIC_URL"), "/"),
 		MaxUploadBytes:     parseBytes(get("MAX_UPLOAD_BYTES", "52428800")),
+		AppLink:            strings.TrimSpace(get("KLUDGE_APP_LINK", get("ANDROID_APP_LINK", "kludge://auth/complete"))),
+		AppPackage:         strings.TrimSpace(get("KLUDGE_APP_PACKAGE", "com.kludge.app")),
+		OAuthTxnTTL:        parsePositiveInt(get("OAUTH_TRANSACTION_TTL_SECONDS", "300"), 300),
+		OAuthHandoffTTL:    parsePositiveInt(get("OAUTH_HANDOFF_TTL_SECONDS", "60"), 60),
 	}
 
 	if cfg.IsTest() {
@@ -112,6 +120,24 @@ func parseEmails(raw string) []string {
 		}
 	}
 	return out
+}
+
+func parsePositiveInt(raw string, fallback int) int {
+	raw = strings.TrimSpace(raw)
+	if raw == "" {
+		return fallback
+	}
+	n := 0
+	for _, r := range raw {
+		if r < '0' || r > '9' {
+			return fallback
+		}
+		n = n*10 + int(r-'0')
+	}
+	if n <= 0 {
+		return fallback
+	}
+	return n
 }
 
 func parseBytes(raw string) int64 {

@@ -112,4 +112,23 @@ CREATE TABLE IF NOT EXISTS item_visits (
 CREATE INDEX IF NOT EXISTS item_visits_created_idx ON item_visits (created_at DESC);
 CREATE INDEX IF NOT EXISTS item_visits_item_idx ON item_visits (item_id);
 CREATE INDEX IF NOT EXISTS item_visits_user_idx ON item_visits (user_id);
+
+CREATE TABLE IF NOT EXISTS oauth_transactions (
+    state_hash    TEXT PRIMARY KEY,
+    provider      TEXT NOT NULL,
+    client        TEXT NOT NULL DEFAULT 'app',
+    session_data  TEXT NOT NULL DEFAULT '',
+    created_at    TIMESTAMPTZ NOT NULL DEFAULT now(),
+    expires_at    TIMESTAMPTZ NOT NULL
+);
+CREATE INDEX IF NOT EXISTS oauth_transactions_expiry_idx ON oauth_transactions (expires_at);
+
+CREATE TABLE IF NOT EXISTS oauth_handoffs (
+    ticket_hash   TEXT PRIMARY KEY,
+    user_id       UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    created_at    TIMESTAMPTZ NOT NULL DEFAULT now(),
+    expires_at    TIMESTAMPTZ NOT NULL,
+    consumed_at   TIMESTAMPTZ
+);
+CREATE INDEX IF NOT EXISTS oauth_handoffs_expiry_idx ON oauth_handoffs (expires_at) WHERE consumed_at IS NULL;
 `
